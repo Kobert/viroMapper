@@ -6,6 +6,7 @@
 void freeTable(hashEntry* entryList, unsigned int length);
 
 //void addToHash(unsigned int *slidingWindow, unsigned int sequencePosition, hashEntry **hashTable, hashEntry *entryTable, unsigned int *itemsInTable, unsigned int *hit, unsigned int *chained, unsigned int hashValue, unsigned int hashTableSize);
+int testReference(globalVariables* g, setting s);
 
 int populateHashTable(setting * arg, globalVariables* globalVar, char *seq, hashEntry ***hashTable, hashEntry **entryTable, unsigned int *itemsInTable);
 

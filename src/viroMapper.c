@@ -22,7 +22,8 @@
 int main(int argc, char **argv)
 {
   
-
+//  fprintf(stderr,"FIX chainHash!!!\n");
+//    exit(0);
   
  setting arg = map_initArgs(argc, argv);
  
@@ -38,7 +39,9 @@ int main(int argc, char **argv)
   
   if(arg.executeReferenceOnly)
   {
-     printf("[NOTE:]    \"-x\" set. Exiting now...\n"); 
+     testReference(&globalVar, arg);
+          
+     print_selective("[NOTE:]    \"-x\" set. Exiting now...\n"); 
       
      cleanForExit(&arg, &globalVar,  &rv);
   
@@ -89,9 +92,12 @@ int main(int argc, char **argv)
 //     
 //    exit(1);
 // //   
+
+
   hashMapReads(arg, &globalVar, &rv);
 
 
+  print_selective("\nGood hits: %d, multi hits %d bad hits %d (bad + multi %.11f)\n", good_hit, multi_hit, bad_hit, (bad_hit+multi_hit)/(double)(good_hit+bad_hit+multi_hit));
   
   postProcessResults(arg, &rv);
 
@@ -117,25 +123,29 @@ printGnuplotDat(gnuplotFile, rv);
 
 fclose(gnuplotFile);
 
-printf("\nDatafile for Gnuplot written to: \"%s\"\n",gnuplotFileName);
+print_selective("\nDatafile for Gnuplot written to: \"%s\"\n",gnuplotFileName);
 if(!arg.outFilePrefix)
 {
- printf("File \"%s\" will be overwritten on the next call to this program!\n", gnuplotFileName); 
+ print_selective("File \"%s\" will be overwritten on the next call to this program!\n", gnuplotFileName); 
 }
 
 plotQualityProfile(arg, rv.assignedLength, gnuplotFileName);
-printf("Qualityprofile plotted...\n");
+print_selective("Qualityprofile plotted...\n");
 
 plotCoverage(arg, gnuplotFileName);
-printf("Coverageprofile plotted...\n");
+print_selective("Coverageprofile plotted...\n");
 
 plotMajorBase(arg, gnuplotFileName);
-printf("Majorbases plotted...\n");
+print_selective("Majorbases plotted...\n");
 
 free(gnuplotFileName);
 }
  
-if(arg.doCsvFile)
+
+ 
+ 
+ 
+ if(arg.doCsvFile)
 {
     char *csvFileName;
   if(arg.outFilePrefix)
@@ -150,9 +160,31 @@ FILE * csvFile = fopen(csvFileName,"w");
 
 printCSV(csvFile, rv);
 fclose(csvFile);
-printf("\ncsv output written to:           \"%s\"\n", csvFileName);
+print_selective("\ncsv output written to:           \"%s\"\n", csvFileName);
 free(csvFileName);
 }
+
+
+
+char *htmlFileName;
+    if(arg.outFilePrefix)
+    {
+    htmlFileName = (char*)calloc(strlen(arg.outFilePrefix)+6, sizeof(char));
+    sprintf(htmlFileName, "%s.html", arg.outFilePrefix);
+    }else{
+    htmlFileName = (char*)calloc(11, sizeof(char));
+    sprintf(htmlFileName, "_temp.html");
+    }
+FILE * htmlFile = fopen(htmlFileName,"w");
+
+printHtml(htmlFile, arg, rv);
+fclose(htmlFile);
+print_selective("\nHtml output written to:           \"%s\"\n", htmlFileName);
+free(htmlFileName);
+
+
+
+
 
 if(arg.writeConsensus)
 {
@@ -169,7 +201,7 @@ FILE * consensFile = fopen(consensFileName,"w");
 
 writeConsensusReferenceFile(consensFile, rv, "consensus");
 fclose(consensFile);
-printf("\nConsensus sequence written to:       \"%s\"\n", consensFileName);
+print_selective("\nConsensus sequence written to:       \"%s\"\n", consensFileName);
 free(consensFileName);
 }
 
@@ -177,13 +209,16 @@ if(arg.doTrim)
 {
 print_selective("\n\t Avg trimmed ratio:   %.4f (Average per read)\n",globalVar.avgRatioTrimmed);
 
-print_selective("\t Total trimmed ratio: %.4f (Fraction of sites)\n",(double)globalVar.trimmed/(globalVar.trimmed + globalVar.kept));
+print_selective("\t Total trimmed ratio: %.4f (Fraction of sites)\n\n",(double)globalVar.trimmed/(globalVar.trimmed + globalVar.kept));
 } 
   
 
-
-  
+  printTime();
+  print_selective(" Freeing data-structures...\n");
   cleanForExit(&arg, &globalVar,  &rv);
+  
+  printTime();
+  print_selective(" Exiting.\n");
   
   return 0;
 

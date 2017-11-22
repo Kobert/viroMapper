@@ -11,6 +11,7 @@
 #include "ref_hash.h"
 #include "ref_io.h"
 #include "ref_math.h"
+#include "ref_arg.h"
 
 //------------UTILITIES-FOR-ENTRIES-IN-HASHTABLE-------------------------------------------------------------------------------------------
 
@@ -34,7 +35,8 @@ void initEntry(hashEntry* entry, unsigned int * val)
 unsigned int i;
 
 entry->inHitList = 0;
-entry->allocatedHitList = 10; //TODO 10 happens to work for the given dataset. Do not forget to realloc!!!!!
+// entry->allocatedHitList = 10; //TODO 10 happens to work for the given dataset. Do not forget to realloc!!!!!
+entry->allocatedHitList = 120; 
 entry->hitList = (unsigned int *)calloc(entry->allocatedHitList, sizeof(unsigned int));
 entry->value = (unsigned int *)calloc(_numMulti, sizeof(unsigned int));
 
@@ -181,7 +183,7 @@ void chainHash(unsigned int *slidingWindow, unsigned int sequencePosition, hashE
 				h->repeats++;
 				h->hitList[h->inHitList] = sequencePosition;
 				h->inHitList++;
-				assert(h->inHitList < 10); //TODO This assertion must be replaced by a check for reallocating the memory!!!!!
+				assert(h->inHitList < h->allocatedHitList); //TODO This assertion must be replaced by a check for reallocating the memory!!!!!
 				
 				(*hit)++;
 				found = 1;
@@ -197,8 +199,9 @@ void chainHash(unsigned int *slidingWindow, unsigned int sequencePosition, hashE
 			hashEntry g;
 			initEntry(&g,slidingWindow);
 			g.hitList[0] = sequencePosition;
-			g.inHitList++;
-			assert(h->inHitList < 10); //TODO This assertion must be replaced by a check for reallocating the memory!!!!!
+			g.inHitList++;//TODO can be set to 1?
+			assert(g.inHitList < g.allocatedHitList); //TODO This assertion must be replaced by a check for reallocating the memory!!!!! 
+                        //TODO really h not g? TODO can be removed without fault since set to 1.
 			
 			entryTable[*itemsInTable]=g;
 			h->next	 = *itemsInTable;		
@@ -234,17 +237,22 @@ unsigned int pos = hashUI(slidingWindow, hashValue, hashTableSize);
 
 
 	if(sEQe(slidingWindow,*e))	//If we find a matching entry, simply count one more repeat
-	{
-	e->repeats++;
-	(*hit)++;
+        {
+	
 //	printEntry(*e);
-
+        e->repeats++;
+        e->hitList[e->inHitList] = sequencePosition;
+	e->inHitList++;
+	assert(e->inHitList < e->allocatedHitList); //TODO This assertion must be replaced by a check for reallocating the memory!!!!!
+	
+        (*hit)++;
 	}else{
 		  
 	  chainHash(slidingWindow, sequencePosition, entryTable, itemsInTable, e, hit, chained);
 
 	}
-
+        //NOTE this seems to have been a gigantic mistake!
+//         chainHash(slidingWindow, sequencePosition, entryTable, itemsInTable, e, hit, chained);
 	  
 	}
 	
@@ -308,7 +316,7 @@ print_selective("\n\t Number of bases in the window: %u\n",sizeOfWindow );
 for(i=0;i<hashTableSize;i++)
 (*hashTable)[i]=NULL;
 
-//Table holding the actual entrier.
+//Table holding the actual entries.
 //Allocate enough memory to be sure to store all information.
 //Size could be reduced again later (but for some reason that didn't work well...)
 *entryTable = realloc(*entryTable, globalVar->referenceSequenceLength * sizeof(hashEntry)); 
@@ -371,18 +379,33 @@ return chained;
 //--Look-up-hashtable-entries--------------------------------------------------------------------------------------------
 int getMapPostition(setting s, resultsVector* rv, unsigned int *hitList, unsigned int *whichHit, unsigned int howManyPos, unsigned int* max_fragments)
 {
+//       print_selective("1 gMP\n");
   unsigned int max = 0;
   int whichMax = -1;
   unsigned int i;
   
   unsigned int count = 0;
   
-  unsigned int 	foundFirst = 0,
+  unsigned int 	foundFirst  = 0,
 		foundSecond = 0;
+  unsigned int  multi_max   = 0;
  //unsigned int   foundThird = 0;		
+//   print_selective("Pos: %d ", howManyPos);
   for(i = 0; i<howManyPos; i++)
   {
-    if(hitList[whichHit[i]] >= s.minFracs)
+   
+
+//       print_selective("1 for\n");
+//       
+//       print_selective("i: %d:\n ", i);
+//       print_selective("wH d: %d:\n ", whichHit[i]);
+//       print_selective("wH u: %u:\n ", whichHit[i]);
+//       print_selective("hL: %d:\n ", hitList[whichHit[i]]);
+//       
+//       
+//       
+//       print_selective("%d: %d,\n ", whichHit[i], hitList[whichHit[i]]);
+       if(hitList[whichHit[i]] >= s.minFracs)
     {
         count++;
       //if(foundSecond)
@@ -398,24 +421,31 @@ int getMapPostition(setting s, resultsVector* rv, unsigned int *hitList, unsigne
      }
       
     }
+    
+//       print_selective("2 for\n");
     if(hitList[whichHit[i]] > max)
     {
      max =  hitList[whichHit[i]];
      whichMax = whichHit[i];
     }
+    
+//       print_selective("3 for\n");
   }
   
-  if(count>2)
-  {
-        for(i = 0; i<howManyPos; i++)
-  {
-    if(hitList[whichHit[i]] >= s.minFracs)
-    {
-//         print_selective("%u (%u) ",whichHit[i], hitList[whichHit[i]]);
-    }
-  }
-//   print_selective("count: %u\n",count);
-  }
+  
+//       print_selective("2 gMP\n");
+//   print_selective("\n");
+//   if(count>2)
+//   {
+//         for(i = 0; i<howManyPos; i++)
+//   {
+//     if(hitList[whichHit[i]] >= s.minFracs)
+//     {
+// //         print_selective("%u (%u) ",whichHit[i], hitList[whichHit[i]]);
+//     }
+//   }
+// //   print_selective("count: %u\n",count);
+//   }
   
   
   *max_fragments = max;
@@ -428,16 +458,27 @@ int getMapPostition(setting s, resultsVector* rv, unsigned int *hitList, unsigne
  //   printf("%u\t ", whichHit[i]);
  // }
  //   printf("\n");
- //       for(i = 0; i<howManyPos; i++)
- // {
+        for(i = 0; i<howManyPos; i++)
+  {
  //   printf("%u\t ", hitList[whichHit[i]]);
- // }
+      if(hitList[whichHit[i]] == max)
+    {
+        multi_max++;
+        if(multi_max > 1) //If the placement cannot be uniquely defined discard the read
+        {
+//             printf("countthis\n");
+            multi_hit++;
+            return -1;
+        }
+    }
+  }
  // printf("\n");
  //   printf("\n");
  //   rv->indels++;
  //   return -1; //WARNING This means that reads with indels are simply discarded!!!!!!!!!!!!!
   }
   
+//       print_selective("3 gMP\n");
  // if(foundThird)
  //   printf("------------------------------------------------------------------------------------------------------------\n");
   
@@ -447,7 +488,12 @@ int getMapPostition(setting s, resultsVector* rv, unsigned int *hitList, unsigne
 		      //			3 is better 			length ref: 10700, length frag 400, num frag 3, p value: 0.0000007169 
 		      //             max > 3 for refLength 10700, sequencelength <= 500 gives 10^-9 (4*10^-10)
 		      //		Results regarding coverage do not change much compared to max >2. However, less Zika is assembled for Dengue reference -> ++
-	return whichMax;
+	if(whichMax < 10724)
+        good_hit++;
+        else
+        bad_hit++;
+            
+        return whichMax;
 	}
   
   return -1;
@@ -487,8 +533,10 @@ int checkMismatches(setting s, unsigned int *hitList, unsigned int *whichHit, un
 
 //For a fragment, check if it matched a hash entry. If it does, note down the possible positions that result from this.
 int checkHash(hashEntry ** hashTable, hashEntry * entryTable, unsigned int * window,  
-	      unsigned int *hitTable, unsigned int *whichHit, unsigned int *howManyPos, unsigned int fragmentNumber)
+	      unsigned int *hitTable, unsigned int **whichHitP, unsigned int * num_allocated_whichHit, unsigned int *howManyPos, unsigned int fragmentNumber)
 {
+    unsigned int *whichHit = *whichHitP;
+//     printf("in cH\n");
   unsigned int i;
    unsigned int pos = hashUI(window, _hashValue, _hashTableSize);
    int sequencePosition;
@@ -510,15 +558,38 @@ int checkHash(hashEntry ** hashTable, hashEntry * entryTable, unsigned int * win
 	      continue;
 	    }
 	    
+// 	    int reallocated = 0;
+	    
 	    if(hitTable[sequencePosition ] == 0)
 	    {
+                while(*howManyPos >= *num_allocated_whichHit)  //A simple if() might also suffice instead of while(). But this should be safer still.
+                {
+                    *num_allocated_whichHit = *num_allocated_whichHit *2;
+//                     printf("pointer before: %p\n", whichHit);
+                    whichHit = (unsigned int *)realloc(whichHit, *num_allocated_whichHit * sizeof(unsigned int));
+                   assert(whichHit && "whichHit could not be reallocated");
+//                  unsigned int *_temp_whichHit = (unsigned int *)realloc(whichHit, *num_allocated_whichHit * sizeof(unsigned int));
+//                      assert(_temp_whichHit && "whichHit could not be reallocated");
+//                free(whichHit);
+//                whichHit = _temp_whichHit;
+//                       printf("pointer after: %p\n", whichHit);
+//                     reallocated = 1;
+//                     printf("REALLOCATED: %d, sequencePosition: %d, howManyPos: %d\n", *num_allocated_whichHit, sequencePosition, *howManyPos);
+                
+                    *whichHitP = whichHit;
+                }
+                
 	     whichHit[*howManyPos] = sequencePosition;
 	  
-	    (*howManyPos)++; 	      
+	    (*howManyPos)++; 
+            
 	    }
 	    hitTable[sequencePosition ]++;
 
+//             if(reallocated)
+//                 printf("After reallocation element 0: %d\n", whichHit[0]);
 	  }
+// 	   printf("After forloop element 0: %d\n", whichHit[0]);
 	return 1;
 	}else{
 
@@ -543,6 +614,15 @@ int checkHash(hashEntry ** hashTable, hashEntry * entryTable, unsigned int * win
 					    
 					    if(hitTable[sequencePosition] == 0)
 					    {
+                                                
+                                                while(*howManyPos >= *num_allocated_whichHit)  //A simple if() might also suffice instead of while(). But this should be safer still.
+                                                {
+                                                *num_allocated_whichHit = *num_allocated_whichHit *2;
+                                                whichHit = (unsigned int *)realloc(whichHit, *num_allocated_whichHit * sizeof(unsigned int));
+                                                assert(whichHit && "whichHit could not be reallocated (else clause)");
+                                                *whichHitP = whichHit;    
+                                                }
+                                                
 					    whichHit[*howManyPos] = sequencePosition;
 	  
 					    (*howManyPos)++;	      
@@ -609,6 +689,9 @@ char *trim(char *str)
 int getNextNonEmptyLine(FILE * file, char ** read, size_t * bytes)
 {
 
+//     print_selective("in getNextNonEnptyLine\n");
+//     fflush(stderr);
+    
  unsigned int i;  
 
   unsigned int foundBeginning = 0;
@@ -616,8 +699,11 @@ int getNextNonEmptyLine(FILE * file, char ** read, size_t * bytes)
   
   int seqLength =  getline(read, bytes,file);
     
-	while(!foundBeginning)
+//   print_selective("seqLength: %d, read %s\n", seqLength, *read);
+
+        while(!foundBeginning && seqLength > 0)
 	{
+//         print_selective("while getNextNonEnptyLine\n");
 	i = 0;
 	  while((*read)[i] == ' ' || (*read)[i] == '\t')
 	  {
@@ -629,13 +715,16 @@ int getNextNonEmptyLine(FILE * file, char ** read, size_t * bytes)
 	  seqLength =   getline(read, bytes,file);
 	  }else{
     
-	    if((*read)[i] == EOF || seqLength <= 0)
+	    if((*read)[i] == EOF || seqLength <= 0 )
 	    return 0;
     
 	  foundBeginning = 1;
 	  }
+	  
+// 	print_selective("i %d read \"%s\", seqLength=%d\n", i, *read, seqLength);
 	}
- 
+ if(seqLength<1)
+     return 0;
 
     //Simply delete leading and trailing whitespaces
     trim(*read);
@@ -652,6 +741,9 @@ int getNextNonEmptyLine(FILE * file, char ** read, size_t * bytes)
 
 int getNthLine(int n, FILE * file, char ** read, size_t * bytes)
 {
+//     print_selective("in getNthLine\n");
+//     fflush(stderr);
+    
   assert(n>0);
    unsigned int i;
    
@@ -796,9 +888,11 @@ int getNextQuality(FILE * file, char ** read, unsigned int * bytes, unsigned int
 }
 */
 
-int placeFragments(setting s, resultsVector* rv, hashEntry ** hashTable, hashEntry * entryTable, char * seq, unsigned int firstPosition, 
+int placeFragments(setting s, globalVariables* g, resultsVector* rv, hashEntry ** hashTable, hashEntry * entryTable, char * seq, unsigned int firstPosition, 
 			    unsigned int * hit, unsigned int *miss, unsigned int * hitPerRound, unsigned int *max_fragments)
 {
+    
+// print_selective("in PF\n");
    unsigned int i, pos;
    
    unsigned int howManyPos = 0,  
@@ -815,16 +909,18 @@ int placeFragments(setting s, resultsVector* rv, hashEntry ** hashTable, hashEnt
     num = _numMulti;
     #endif
   
-    unsigned int * whichHit = (unsigned int *)calloc(20 * 10,sizeof(unsigned int));//TODO Again, hardcoded values that work for this data set. MUST be changed!!!!
- 
+    unsigned int num_allocated_whichHit = 250;
+    unsigned int * whichHit = (unsigned int *)calloc(num_allocated_whichHit, sizeof(unsigned int));
+    
     window = (unsigned int*)malloc(num * sizeof(unsigned int));
     
 		
-   unsigned int * hitList = (unsigned int *)calloc(17000,sizeof(unsigned int));//TODO hard coded 17000 only works for this data. Must be changed to actual value from file!!!!!!
- 
+   unsigned int * hitList = (unsigned int *)calloc(strlen(g->referenceSequence),sizeof(unsigned int)); 
+   
    
   length = strlen(seq) - firstPosition;// Right now no -1 since strings are trimmed beforehand!
   assert(length > 0);
+  
   
   fragments  = floor( (double)length/(double)basesPerWindow() );
   if(fragments <= 0)
@@ -833,39 +929,46 @@ int placeFragments(setting s, resultsVector* rv, hashEntry ** hashTable, hashEnt
   assert(fragments > 0); //TODO if this actually happens, the read is to short and should be ignored/discarded
   }
   
+// printf("element 0 before: %d\n", whichHit[0]);
   for(i=0; i<fragments ;i++)
   {
     pos = i * basesPerWindow() + firstPosition;
     makeWindow(window, seq, pos);
     
-
-  if(checkHash(hashTable, entryTable, window, hitList, whichHit, &howManyPos, i))
+  if(checkHash(hashTable, entryTable, window, hitList, &whichHit, &num_allocated_whichHit, &howManyPos, i))
   {
       localHitPerRound++;
    lhit++;
     }else{
      lmiss++; 
     }
-    
+//    if(i==0)
+//        printf("element 0 during: %d\n", whichHit[0]);
+
   } 
   
+// printf("element 0 after: %d\n", whichHit[0]);
+
   *miss 	+= lmiss;
   *hit 		+= lhit;
   *hitPerRound	 = localHitPerRound;
   
- 
+//  print_selective("1 PF\n");
   free(window);
   
- 
+assert(whichHit[0] <= strlen(g->referenceSequence) && "whichHit has too large an entry");
+
   int result = getMapPostition(s, rv, hitList, whichHit, howManyPos, max_fragments); 
-  
+     
   //if( !checkMismatches(s, hitList, whichHit, howManyPos, seq, 3) )
   //{
   //  result = -1;
   //}
-  free(hitList);
+//     print_selective("2 PF\n");
+  free(hitList); //TODO this is the problem!
+  
   free(whichHit);
-   
+
   return result;
 }
 
@@ -1126,6 +1229,9 @@ void cleanHashMapReadsWithKey(setting arg, globalVariables *globalVar, resultsVe
 	// This loop goes over all short read's dna data
 	while(getNthLine(readDiff, readsFile, &seq_name, &bytesToRead_name))
 	{
+//              printTime();
+//              print_selective(" in while: Name %s\n", seq_name);
+//              fflush(stderr);
 	  getNthLine(readDiff, readsFile, &seq, &bytesToRead);
 	  char * complement;
 	  complement = strdup(seq);
@@ -1150,7 +1256,7 @@ void cleanHashMapReadsWithKey(setting arg, globalVariables *globalVar, resultsVe
 	
 	// Find the left most position where the read aligns to the reference.
 	// The first try is performed on the regular sequence with no offset.
-	whichPos = placeFragments(arg, rv, globalVar->hashTable, globalVar->entryTable, seq, 0, &hit, &miss, &hitPerRound, &max_fragments);
+	whichPos = placeFragments(arg, globalVar, rv, globalVar->hashTable, globalVar->entryTable, seq, 0, &hit, &miss, &hitPerRound, &max_fragments);
 	
 	  if( whichPos >= 0 && whichPos <= (globalVar->referenceSequenceLength - strlen(seq)) )
 	  {
@@ -1170,7 +1276,7 @@ void cleanHashMapReadsWithKey(setting arg, globalVariables *globalVar, resultsVe
 	   assert(strlen(complement) == strlen(seq));
 	   }
 	   
-	   whichPos = placeFragments(arg, rv, globalVar->hashTable, globalVar->entryTable, complement, 0, &hit, &miss, &hitPerRound, &max_fragments);
+	   whichPos = placeFragments(arg, globalVar, rv, globalVar->hashTable, globalVar->entryTable, complement, 0, &hit, &miss, &hitPerRound, &max_fragments);
 	  
 	
 	  if( whichPos >= 0 && whichPos <= (globalVar->referenceSequenceLength - strlen(seq)) )
@@ -1192,7 +1298,7 @@ void cleanHashMapReadsWithKey(setting arg, globalVariables *globalVar, resultsVe
 	    //  shift = floor(basesPerWindow()/2.0);
 	    }
 	    
-	   whichPos = placeFragments(arg, rv, globalVar->hashTable, globalVar->entryTable, seq, shift, &hit, &miss, &hitPerRound, &max_fragments);
+	   whichPos = placeFragments(arg, globalVar, rv, globalVar->hashTable, globalVar->entryTable, seq, shift, &hit, &miss, &hitPerRound, &max_fragments);
 	   whichPos = whichPos - shift;
 	   
 	  if( whichPos >= 0 && whichPos <= (globalVar->referenceSequenceLength - strlen(seq)) )
@@ -1208,7 +1314,7 @@ void cleanHashMapReadsWithKey(setting arg, globalVariables *globalVar, resultsVe
 	  {
 
 	    
-	   whichPos = placeFragments(arg, rv, globalVar->hashTable, globalVar->entryTable, complement, shift, &hit, &miss, &hitPerRound, &max_fragments);
+	   whichPos = placeFragments(arg, globalVar, rv, globalVar->hashTable, globalVar->entryTable, complement, shift, &hit, &miss, &hitPerRound, &max_fragments);
 	   whichPos = whichPos - shift;
 	   
 	  if( whichPos >= 0 && whichPos <= (globalVar->referenceSequenceLength - strlen(seq)) )
@@ -1317,9 +1423,14 @@ void cleanHashMapReadsWithKey(setting arg, globalVariables *globalVar, resultsVe
 	  }
 	  readDiff = 1; // We should be at quality and want to advance to the name.
 	  free(complement);
+          
+//           print_selective(" end while\n");
+//           fflush(stderr);
 	}
   
-  
+//        print_selective(" out of while\n");
+//        fflush(stderr);
+       
   print_selective("\n\tNumber of reads: %u, number of matching reads: %u (%.2f%%)\n", numReads, numMatches, 100.0*(double)numMatches/numReads);
   print_selective("\t(Forward %.2f%%, reverse %.2f%% (Shifted: %.2f%%))\n", 100.0*(double)numForwardMatches/numReads,
 								 100.0*(double)numReverseMatches/numReads, 
@@ -1329,6 +1440,8 @@ void cleanHashMapReadsWithKey(setting arg, globalVariables *globalVar, resultsVe
   fclose(samFile);
   
   fclose(readsFile);
+  
+  free(seq_name);
   free(seqQ);
   free(seq);
   
@@ -1336,6 +1449,136 @@ void cleanHashMapReadsWithKey(setting arg, globalVariables *globalVar, resultsVe
 
 
 
+
+
+
+
+int testReferenceBySize(globalVariables* g, setting s, unsigned int seqSize)
+{
+    
+int isGoodReference = 1;//One denotes a good reference sequence
+
+int i, whichPos;
+//unsigned int seqSize;
+
+unsigned int hit=0, miss=0, hitPerRound=0;
+unsigned int max_fragments = 0;
+//TODO do dynamic
+//seqSize = 250;
+
+char * seq;
+
+ resultsVector testRv;
+ 
+ initResults(&testRv, strlen(g->referenceSequence));
+ 
+
+seq = (char *)calloc(seqSize + 1, sizeof(char));
+
+    for(i = 0 ; i< g->referenceSequenceLength - seqSize ; i++ )
+    {
+    memcpy( seq, &(g->referenceSequence[i]), seqSize );
+    
+    whichPos = placeFragments(s, g, &testRv, g->hashTable, g->entryTable, seq, 0, &hit, &miss, &hitPerRound, &max_fragments);
+    if(whichPos != i && whichPos >= 0)
+    {
+        isGoodReference = 0;
+
+  //   printf("Not hit %d != %d\n", i, whichPos);   
+             break;
+    }
+    }
+    
+    
+     
+         for(i = 0 ; i< g->referenceSequenceLength - seqSize ; i++ )
+    {
+               result r = testRv.results[i];
+    if(r.numIndels>0)
+    {
+        isGoodReference = 0;
+
+    //   printf("Different insertionpoints found (%d: %u).\n", i, r.numIndels); 
+               break;
+    }
+        
+        
+    }
+    
+    
+ 
+     
+ 
+
+     
+freeResults(&testRv);
+
+free(seq); 
+ //   printf("returning %u\n", isGoodReference);
+    return isGoodReference;
+       
+}
+
+
+void printGoodNumber(setting s,unsigned int num)
+{
+    printf("Test concluded\n");
+    printf("\nThe given reference sequence :\n%s\n", s.referenceFile);        
+    printf("may be a candidate for processing with this tool.\n");    
+            
+    printf("Good behavior can however only be expected for short reads\n");
+    printf("with up to %u characters each!\n", num);
+    printf("\nLonger reads may cause suboptimal results.\n\n");
+    
+}
+
+
+void printBadReference(setting s)
+ {
+        printf("Test concluded\n");
+        printf("\nThe given reference sequence :\n%s\n", s.referenceFile);  
+        printf("is likely a BAD candidate for this tool!\n");
+        printf("Please consider using an alternative software, or proceed with caution.\n\n");  
+ }
+ 
+void printPerfectReference(setting s)
+{
+        printf("Test concluded\n");
+        printf("\nThe given reference sequence :\n%s\n", s.referenceFile);        
+       printf("is likely a GOOD candidate for processing with this tool.\n\n");    
+}
+
+int testReference(globalVariables* g, setting s)
+{
+    int i, isGoodReference = 0, lastGood=-1;
+    unsigned int seqSize = 50;
+    
+    for(i = 50; i < g->referenceSequenceLength; i = i *2)
+    {
+        seqSize = i;
+        
+    if(testReferenceBySize(g, s, seqSize))
+    {
+     isGoodReference = 1;        
+     lastGood = seqSize;
+    }else{
+        if(isGoodReference)
+        {
+         printGoodNumber(s, lastGood);
+         return 1;
+        }else{
+         printBadReference(s);
+         return 0;
+        }
+        
+    }
+    
+    }
+    
+    printPerfectReference(s);
+    
+    return 1;
+}
 
 
 

@@ -17,7 +17,7 @@
  void map_help()
  {
   printf("\n"); 
-  printf("This is viroMapper v. 0.0.2\n\n"); 
+  printf("This is viroMapper v. 0.0.4\n\n"); 
   printf("Function arguments are:\n"); 
   printf("\n"); 
   printf(" -r <string>       for specifying a file containing the reference sequence (fasta format only)\n");    
@@ -32,8 +32,8 @@
   printf("                   A path should be provided with -o for this option.\n");    
   printf(" -g                Plot results in Gnuplot.\n");
   printf("                   A path can be provided with -o for this option.\n");
-  printf("                   If no path is provided, no *.png files will be written.\n");
-  printf(" -x                Only count repeating 8-meres in reference sequence and exit.\n");   
+  printf("                   If no path is provided, no *.png files will be written.\n");  
+  printf(" -x                Only test reference sequence for suitability and exit.\n");   
   printf("                   (No fastq file is needed with this otion.)\n");   
   printf(" -y                Write fasta file containing the consensus sequence.\n");   
   printf("                   A path should be provided with -o for this option.\n");    
@@ -61,6 +61,7 @@
   int index;
   int c;
   
+  
   s.mapOnly = 1;
   s.primes  = 0;
   
@@ -73,6 +74,9 @@
 #endif
   
   s.referenceFile = NULL;
+  
+  s.multi_referenceFiles = NULL;
+  s.num_multi_references = 0;
   
   s.readsFile = NULL;
 
@@ -98,6 +102,7 @@
 
 
   while ((c = getopt (argc, argv, "cdef:ghmr:s:tpw:o:q:xyz")) != -1)
+  {          
     switch (c)
       {
       case 'h':
@@ -130,7 +135,30 @@
 //	s.pValue = atoi(optarg);//printf("%s\n", optarg);
 //        break;
       case 'r':
-	s.referenceFile = strdup(optarg);//printf("%s\n", optarg);
+        if(!s.referenceFile) //This is mostly needed for historic reasons. Everything should now work with multi_referenceFiles
+	s.referenceFile = strdup(optarg);
+	
+	s.multi_referenceFiles = (char**)realloc(s.multi_referenceFiles,sizeof(char*)*(s.num_multi_references+1) );
+        
+        s.multi_referenceFiles[s.num_multi_references] = strdup(optarg);
+	s.num_multi_references++;
+        
+            while(argv[optind] && (argv[optind])[0]!='-')
+            {
+            s.multi_referenceFiles = (char**)realloc(s.multi_referenceFiles,sizeof(char*)*(s.num_multi_references+1) );
+            s.multi_referenceFiles[s.num_multi_references] = strdup(argv[optind]);
+	
+            s.num_multi_references++;
+       
+//             fprintf(stderr, "%s ",argv[optind]);
+            optind++;
+            }
+            
+//             for(int i = 0; i<s.num_multi_references; i++)
+//             {
+//                 fprintf(stderr, "%s \n", s.multi_referenceFiles[i]);
+//             }
+            
         break;
       case 'd':
         s.verbose = 2;
@@ -166,7 +194,7 @@
 	}
 	else if (isprint (optopt))
 	{
-          fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+          fprintf (stderr, "[ERROR:] Unknown option `-%c'.\n", optopt);
 	
 	  assert(0);
 	}
@@ -179,7 +207,8 @@
         map_help();
         abort ();
       }
-
+//       fprintf(stderr,"TEST: optind %d: %s\n", optind, argv[optind]);
+ }
       
 	for (index = optind; index < argc; index++)
 	print_selective ("Non-option argument %s\n", argv[index]);
@@ -187,14 +216,16 @@
 	if(!s.referenceFile)
 	{
         map_help();
-	fprintf(stderr, "Please specify reference file with -r command\n");
+	fprintf(stderr, "[ERROR:] Please specify a reference file with the \'-r\' command.\n\n");
 	assert(s.referenceFile);
 	}
 	
 	if(!s.readsFile && !s.primes && !s.executeReferenceOnly)
 	{
          map_help();   
-	 fprintf(stderr, "Please specify reads file with -s command\n");
+	 fprintf(stderr, "[ERROR:] Please specify a reads file with the -s command,\n");
+         fprintf(stderr, "         or use an option that does not rely on it (e.g \'-x\')\n\n");
+         
 	assert(s.readsFile);  
 	}
   
@@ -240,8 +271,17 @@
   {
    print_selective("\n[Note:] No output format specified.\n ");   
    print_selective("        Only basic statistics will be printed to the screen.\n ");
-   print_selective("        To see a list of available options run the program with the -h flag.\n ");
+   print_selective("        To see a list of available options run the program with the -h flag.\n\n");
   }  
+  
+  if(s.num_multi_references > 1 && s.executeReferenceOnly)
+  {
+   print_selective("\n[ERROR:] Multiple references given!\n");
+   print_selective("         When testing for suitability via \"-x\", please \n");
+   print_selective("         only submit a single reference sequence.\n");
+   print_selective("         Exiting now!\n");
+   exit(1);   
+  }
   
   return s;
  }

@@ -10,6 +10,9 @@
 #include "referenceAssembly.h"
 #include "ref_math.h"
 
+
+//---------UTILITY-FUNCTIONS---------------------------------------------------------------------------------------------
+
 //The only reason for this function is to quickly change the output behaviour code-wide
 void print_selective(const char *format, ...)
 {
@@ -37,6 +40,63 @@ void printTime()
     print_selective("[%s]", buffer);     
 }
 
+void chomp(char* c)
+{
+    int i;
+    for(i = strlen(c)-1; i >= 0; i--)
+    {
+        if(c[i] == '\n' || c[i] == '\n')
+        {
+            c[i] = '\0';
+        }else{
+         break;   
+        }
+    }
+}
+
+void cut_at_first_space(char* c)
+{
+    
+int i;
+int found_non_space = 0;
+
+    for(i=0; i<strlen(c); i++)
+    {
+        if(c[i] != ' ')
+        found_non_space = 1;
+        
+        if(found_non_space && c[i] == ' ')
+        {
+        c[i] = '\0';
+        return;   
+        }
+    }
+    
+}
+
+//return of this function must be freed!
+char* remove_path_by_strdup(char* c)
+{
+    
+int i;
+char* result;
+
+    for(i=strlen(c); i>0; i--)
+    {
+        if(c[i] == '/')
+        {
+        i++;
+        break;
+        }
+    }
+
+    assert(i<strlen(c) && "String seems to and in /, or other problem present.");
+result = strdup(&c[i]);
+    
+return result;
+}
+
+//---------------------------------------------------------
 void readToResult(resultsVector *rv, char * seq, unsigned int pos, unsigned int length)
 {
   
@@ -478,6 +538,127 @@ void printCSV(FILE *file, resultsVector rv)
   
 }
 
+//print as html table element
+void pd_c(FILE *file, char* color, const char *format, ...)
+{
+    va_list args;
+    va_start(args,format);
+    fprintf(file,"<td>");
+    vfprintf(file, format, args);
+    fprintf(file,"</td>");
+    va_end(args);   
+}
+
+
+void pd(FILE *file, const char *format, ...)
+{
+  
+    va_list args;
+    va_start(args,format);
+    fprintf(file,"<td>");
+//     pd_c(file, NULL, format);
+    vfprintf(file, format, args);
+    fprintf(file,"</td>");
+    va_end(args);   
+//     
+}
+
+void ph(FILE *file, const char *name, const char *tooltip)
+{
+  
+//     va_list args;
+//     va_start(args,format);
+    if(tooltip)
+    fprintf(file,"<th title=\"%s\">", tooltip);
+    else
+    fprintf(file,"<th>");
+    
+    fprintf(file,"%s", name);
+//     vfprintf(file, format, args);
+    fprintf(file,"</th>");
+//     va_end(args);   
+//     
+}
+
+void printHtml(FILE *file, setting s, resultsVector rv)
+{
+    unsigned int i;
+    result r;
+    
+    fprintf(file,"<html>\n");
+    
+    if(s.outFilePrefix)
+    {
+        char *name;
+        name = remove_path_by_strdup(s.outFilePrefix);
+        fprintf(file,"<head>\n");
+        fprintf(file,"<title>Summary: %s</title>\n", name);
+        fprintf(file,"</head>\n");
+    }else{
+        fprintf(file,"<head>\n");
+        fprintf(file,"<title>Summary: viroMapper</title>\n");
+        fprintf(file,"</head>\n");
+       
+    }
+    
+    fprintf(file,"<body>\n");
+    fprintf(file,"<table border=\"1\">\n");
+    
+    fprintf(file,"<tr>\n");
+    //ph prints <th>input1</th> or <th title="input2">input1</th> if input2!=NULL
+    ph(file,"Position", "Nucleotide position on the reference genome");
+    ph(file,"As", "Number of Adenine bases observed at this position");
+    ph(file,"Cs", "Number of Cytosine bases observed at this position");
+    ph(file,"Gs", "Number of Guanine bases observed at this position");
+    ph(file,"Ts", "Number of Thymin or Uracil bases observed at this position");
+    ph(file,"Ns", "Number of undetermined beses at this position");
+    ph(file,"coverage", "Total coverage at this site");
+//     ph(file,"majorbases", NULL);
+    ph(file,"majorsequence", "Most prevalent base at this position");
+    ph(file,"majorbase_ratio", "Ratio of occurences of the most prevalent base to the total coverage");
+//     ph(file,"position", NULL);
+    ph(file,"secondbase", NULL);
+    ph(file,"secondbase_ratio", NULL);
+    ph(file,"probability_of_seq_error", "Average probability of a sequencing error");
+    ph(file,"expected_number_of_errors", "Expected number of sequencing errors at this site.");
+//     ph(file,"indels", NULL);
+    
+    
+//     fprintf(file, "<th></th><th>As</th><th>Cs</th><th>Gs</th><th>Ts</th><th>Ns</th><th>coverage</th><th>expected_number_of_errors</th><th>majorbase_ratio</th><th>majorbases</th><th>majorsequence</th><th>position</th><th>probability_of_seq_error</th><th>secondbase</th><th>secondbase_ratio</th><th>indels</th>\n");
+    fprintf(file,"</tr>\n");
+    
+    
+	for(i = 0; i < rv.assignedLength; i++)
+	{
+            
+	 r = rv.results[i];
+	      
+                fprintf(file,"<tr>\n");
+                pd(file, "<a id=\"l%d\" name=\"l%d\">%u</a>", i, i, i);
+                pd(file, "%u", r.A);
+                pd(file, "%u", r.C);
+                pd(file, "%u", r.G);
+                pd(file, "%u", r.T);
+                pd(file, "%u", r.N);
+                pd(file, "%u", r.coverage);
+                pd(file, "%c", r.majorBase);
+                pd(file, "%f", r.frequencyMajorBase);
+//                 pd(file, "%u", r.majorBaseCount);
+//              pd(file, "%u", i);
+                pd(file, "%u", r.secondBaseCount);
+                pd(file, "%f", r.frequencySecondBase);
+                pd(file, "%f", r.meanError);
+                pd(file, "%f", r.coverage * r.meanError);
+//                 pd(file, "%u", r.numIndels);
+              
+	      fprintf(file,"\n</tr>\n");
+              
+	}
+  
+  fprintf(file,"</table></body></html>\n");
+}
+
+
 void printGnuplotDat(FILE* file, resultsVector rv)
 {
   unsigned int i, sum;
@@ -738,10 +919,14 @@ print_selective("\n");
 
 void printSamLine(int position, char* referenceName, char* name, char* seq, char* qual, int length,  unsigned int isComplemented, unsigned int mapping_quality, Placement* placement)
 {
+    
     unsigned int flag = 0;
     
     //QNAME
-    printf("%s\t",name);
+    char* t_name = strdup(name);
+    cut_at_first_space(t_name);
+    printf("%s\t",t_name);
+    free(t_name);
     
     //FLAG
     if(isComplemented)
@@ -796,6 +981,8 @@ void printSamLine(int position, char* referenceName, char* name, char* seq, char
     
     //qualities
     printf("%.*s\n", length, qual);
+
+    fflush(stdout);
 }
 
 void printSamHeader(FILE* file, char* nameReference, unsigned int referenceLength)

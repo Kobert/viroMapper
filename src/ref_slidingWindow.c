@@ -12,6 +12,9 @@
 #include "ref_io.h"
 
 
+
+
+
 //---------MAPPING-FUNCTIONS---------------------------------------------------------------------------------------------
 int mapUnsafe(char c) //returns the integer value of a DNA character
 {

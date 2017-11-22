@@ -5,6 +5,10 @@ void print_selective(const char *format, ...);
 
 void printTime();
 
+void chomp(char* c);
+
+void cut_at_first_space(char* c);
+
 void readToResult(resultsVector *rv, char * seq, unsigned int pos, unsigned int length);
 
 void revCompReadToResult(resultsVector *rv, char * seq, unsigned int pos, unsigned int length);
@@ -16,6 +20,8 @@ void revQualityToResult(resultsVector *rv, char * seq, unsigned int pos, unsigne
 void postProcessResults(setting arg, resultsVector *rv);
 
 void printCSV(FILE* file, resultsVector rv);
+
+void printHtml(FILE *file, setting s, resultsVector rv);
 
 void printGnuplotDat(FILE* file, resultsVector rv);
 

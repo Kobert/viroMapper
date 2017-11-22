@@ -8,8 +8,8 @@
 //#define _hashTableSize 11777
 //#define _hashTableSize   1002017 
 //#define _hashTableSize 1252159
-#define _hashTableSize 100003
-// #define _hashTableSize 10030037
+// #define _hashTableSize 100003
+#define _hashTableSize 10030037
 
 #define _hashValue 37
 //#define _hashValue 1000861
@@ -32,11 +32,21 @@
 FILE* fopen64(const char *filename, const char *type);
 //#endif
 
+int good_hit;
+int bad_hit;
+int multi_hit;
+
 typedef struct
 {
 unsigned int verbose;
 
+//contains the name of the first reference file (only for historic reasons)
 char* referenceFile;
+
+//contains all reference files
+char** multi_referenceFiles;
+int num_multi_references;
+
 char* readsFile;
 
 char* dataInFile;
@@ -152,6 +162,11 @@ typedef struct
 {
   char * referenceSequence;
   unsigned int referenceSequenceLength; 
+  
+  char ** reference_names;
+  int number_of_references;
+  
+  int * break_points; //Points where one reference ends and another begins
   
 
  //hash table of POINTERS! for entries.

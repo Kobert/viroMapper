@@ -11,6 +11,7 @@
 #include "ref_hash.h"
 #include "ref_slidingWindow.h"
 #include "ref_io.h" 
+#include "map_arg.h"
  
  
  void help()
@@ -47,25 +48,56 @@
   printf("\n");
  }
  
+void my_free(void* f)
+{
+free(f);
+f = NULL;    
+}
+
 
 void freeSetting(setting *s)
 {
+    int i;
+//       print_selective("1B\n");
   if(s->referenceFile)
   {    
-    free(s->referenceFile);
+    my_free(s->referenceFile);
   }
+  
+//       print_selective("1BB\n");
+  for(i = 0; i < s->num_multi_references; i++)
+  {
+      free(s->multi_referenceFiles[i]);
+  }
+  
+//       print_selective("2B\n");
+  if(s->num_multi_references > 0)
+  {
+   free(s->multi_referenceFiles);   
+  }
+  
+//       print_selective("3B\n");
   if(s->readsFile)
   {
     free(s->readsFile);
   }
+  
+//       print_selective("4B\n");
     if(s->outFilePrefix)
   {
     free(s->outFilePrefix);
   }
+  
+//       print_selective("5B\n");
 }
  
  setting initArgs(int argc, char **argv)
  {
+     
+     good_hit= 0;
+     bad_hit = 0;
+     multi_hit = 0;
+     
   setting s;
   
   s.verbose = 1;
@@ -210,7 +242,7 @@ void freeSetting(setting *s)
 	{
 
 	}else{
-	help();
+	map_help();
 	fprintf(stderr, "\n[ERROR:] Could not execute gnuplot.\n");
 	fprintf(stderr, "         Please make sure gnuplot is installed,\n");
 	fprintf(stderr, "         (preferably gnuplot-x11) or specify another\n");
@@ -245,19 +277,19 @@ void freeSetting(setting *s)
  
  
 
- //-------------Read-Reference-File---------------------------------------------------------------
- //Will attempt to read arg->referenceFile and write its contents to globalVar->referenceSequence
- void readReferenceFile(setting *arg, globalVariables *globalVar)
+  //-------------Read-Multiple-Reference-Files---------------------------------------------------------------
+ //Will attempt to read arg->multi_referenceFiles and concatinate its contents to globalVar->referenceSequence
+ void read_multiple_ReferenceFiles(setting *arg, globalVariables *globalVar, char* fileName)
  {
    
 
      FILE *referenceFile;
-     referenceFile = fopen(arg->referenceFile,"r");
+     referenceFile = fopen(fileName,"r");
 	
         //Check that file opened succesfully
 	if(!referenceFile)
 	{
-	fprintf(stderr, "\n[ERROR:] Could not open file %s\n", arg->referenceFile);
+	fprintf(stderr, "\n[ERROR:] Could not open file %s\n", fileName);
 	  fprintf(stderr, "         Please make sure the path is correct and you have read permission.\n");
 	assert(referenceFile);
 	}
@@ -272,7 +304,12 @@ void freeSetting(setting *s)
   unsigned int foundName = 0;
   unsigned int determinedLF = 0;
   unsigned int determinedCR = 0;  
-
+  
+  int name_length = 0;
+  char * name;
+  size_t bytesToRead_name = 10;
+  name = (char*)malloc(bytesToRead_name);
+  
   int seqLength;
 //unsigned int bytesToRead = 10;
   size_t bytesToRead = 10;
@@ -293,27 +330,7 @@ void freeSetting(setting *s)
    
    rewind(referenceFile);
    
-   //Allocate initial space for reference sequence.
-   // Space allocated here will in almost all cases be strictly more than needed.
-   globalVar->referenceSequence = (char*)malloc((sumLengths+1) * sizeof(char));
-   
-   
-        //Check to see whether we find a sequence name starting with either > or @
-        while(!foundName)
-	{
-	assert(ic = fgetc(referenceFile));
-	c = (char)ic;
-		if(ic == EOF)
-		{
-		fprintf(stderr, "[ERROR:] Could not find beginning of sequence in %s\n", arg->referenceFile);
-		assert(ic != EOF);
-		}
-
-		 if(c == '>' || c == '@')
-		foundName=1;
-	}
-  
-  
+     
         //The getline() command used below does not support linebreaks that are denoted only by \r
         // (instead of \n or \r\n). So make sure we have a readable format.
 	while(!determinedLF)
@@ -337,8 +354,202 @@ void freeSetting(setting *s)
 		determinedCR = 1;  
 	}
 	
+    rewind(referenceFile);
+    
+    
+   //Reallocate sufficient space for concatinating reference sequence.
+   // Space allocated here will in almost all cases be strictly more than needed.
+   int original_length=0;
+   if(globalVar->referenceSequence)
+   {
+   original_length=strlen(globalVar->referenceSequence);
+   globalVar->referenceSequence = (char*)realloc(globalVar->referenceSequence, (original_length+sumLengths+1) * sizeof(char));
+   }else{
+    globalVar->referenceSequence = (char*)malloc((sumLengths+1) * sizeof(char));
+   }
+   
+        //Check to see whether we find a sequence name starting with either > or @
+        while(!foundName)
+	{
+	assert(ic = fgetc(referenceFile));
+	c = (char)ic;
+		if(ic == EOF)
+		{
+		fprintf(stderr, "[ERROR:] Could not find beginning of sequence in %s\n", arg->referenceFile);
+		assert(ic != EOF);
+		}
+
+		 if(c == '>' || c == '@')
+		foundName=1;
+	}
+  
+
+  name_length = getline(&name, &bytesToRead_name,referenceFile);
+  assert(name_length);
+  chomp(name);
+  cut_at_first_space(name);
+  
+//   print_selective("Name:             %s (%d)\n\n", name, name_length);
+print_selective(" Reference name:  %s\n\n", name);
+//    print_selective("Name after chomp: %s (%d)\n", name, name_length);
+//   exit(0);
+ 
+  //TODO THIS HERE IS THE PROBLEM!!!!!!!!!
+	globalVar->reference_names[globalVar->number_of_references] = strdup(name);
+//         globalVar->reference_names[globalVar->number_of_references] = (char*)malloc((strlen(name)+1) * sizeof(char));
+//         memcpy(globalVar->reference_names[globalVar->number_of_references], name, strlen(name));
+//         globalVar->reference_names[globalVar->number_of_references][strlen(name)] = '\0';
+	globalVar->number_of_references++;	
 	
 	
+  seqLength = getline(&seq, &bytesToRead,referenceFile);
+  sumLengths = 0;
+  while(seqLength>=0)
+    {
+
+        if(verbose > 1)
+        {
+        printf("%s",seq);
+        }
+        
+	for(i=0;i<strlen(seq);i++)//Go through the whole sequence and simply write down the appropriate bases.
+	{
+	  if( mapUnsafe(seq[i]) < 0)
+	  continue;
+            {
+            globalVar->referenceSequence[original_length + sumLengths] = seq[i];
+	
+            sumLengths++;
+            }
+	}
+	  fflush(stdout);
+	 seqLength = getline(&seq, &bytesToRead,referenceFile);
+    }
+   
+   if(verbose > 1)
+   printf("\nSumLengths = %u\n", sumLengths);
+   
+   globalVar->referenceSequence = (char*)realloc(globalVar->referenceSequence, (original_length+sumLengths+1)*sizeof(char));
+   globalVar->referenceSequence[original_length+sumLengths] = '\0';
+   globalVar->referenceSequenceLength = original_length+sumLengths;
+   
+   
+   fclose(referenceFile);
+  
+   free(seq);
+
+   free(name);
+ }
+ 
+ //-------------Read-Reference-File---------------------------------------------------------------
+ //Will attempt to read arg->referenceFile and write its contents to globalVar->referenceSequence
+ void readReferenceFile(setting *arg, globalVariables *globalVar)
+ {
+
+     FILE *referenceFile;
+     referenceFile = fopen(arg->referenceFile,"r");
+	
+        //Check that file opened succesfully
+	if(!referenceFile)
+	{
+	fprintf(stderr, "\n[ERROR:] Could not open file %s\n", arg->referenceFile);
+	  fprintf(stderr, "         Please make sure the path is correct and you have read permission.\n");
+	assert(referenceFile);
+	}
+      
+  unsigned int verbose = arg->verbose;    
+  
+  unsigned int i;
+      
+  int ic;
+  char c;
+  
+  unsigned int foundName = 0;
+  unsigned int determinedLF = 0;
+  unsigned int determinedCR = 0;  
+
+  int name_length = 0;
+  char * name;
+  size_t bytesToRead_name = 10;
+  name = (char*)malloc(bytesToRead_name);
+  
+  int seqLength;
+//unsigned int bytesToRead = 10;
+  size_t bytesToRead = 10;
+  char * seq;
+  seq = (char*)malloc(bytesToRead);
+  
+  seqLength = getline(&seq, &bytesToRead,referenceFile);
+  assert(seqLength >= 0);
+  
+  unsigned int sumLengths = 0;
+  seqLength = getline(&seq, &bytesToRead,referenceFile);
+   
+	while( seqLength > 0)
+	{
+	sumLengths += seqLength;
+	seqLength = getline(&seq, &bytesToRead,referenceFile);
+	}
+   
+   rewind(referenceFile);
+   
+          //The getline() command used later does not support linebreaks that are denoted only by \r
+        // (instead of \n or \r\n). So make sure we have a readable format.
+	while(!determinedLF)
+	{
+	assert(ic = fgetc(referenceFile));
+	c = (char)ic;
+		if(ic == EOF)
+		{
+		fprintf(stderr, "[ERROR:] Could not find line feed character \\n in %s\n", arg->referenceFile);
+			if(determinedCR)
+			{
+			fprintf(stderr, "         However, CR \\r was found. At present this software relies on \\n though.\n");
+			fprintf(stderr, "         You may try converting the format with tools such as mac2unix of the dos2unix package.\n");
+			}
+		assert(ic != EOF);
+		}
+
+		if(c == '\n' )
+		determinedLF = 1;
+		if(c == '\r')
+		determinedCR = 1;  
+	}
+        
+rewind(referenceFile);
+   
+   //Allocate initial space for reference sequence.
+   // Space allocated here will in almost all cases be strictly more than needed.
+   globalVar->referenceSequence = (char*)malloc((sumLengths+1) * sizeof(char));
+   
+        //Check to see whether we find a sequence name starting with either > or @
+        while(!foundName)
+	{
+	assert(ic = fgetc(referenceFile));
+	c = (char)ic;
+		if(ic == EOF)
+		{
+		fprintf(stderr, "[ERROR:] Could not find beginning of sequence in %s\n", arg->referenceFile);
+		assert(ic != EOF);
+		}
+
+		 if(c == '>' || c == '@')
+		foundName=1;
+	}
+  
+  name_length = getline(&name, &bytesToRead_name,referenceFile);
+  assert(name_length);
+  chomp(name);
+  cut_at_first_space(name);
+  print_selective(" Reference name:  %s\n", name);
+// print_selective("Name:             %s (%d)\n", name, name_length);
+
+//   print_selective("Name after chomp: %s (%d)\n", name, name_length);
+//   exit(0);
+  
+	globalVar->reference_names[globalVar->number_of_references] = strdup(name);
+	globalVar->number_of_references++;
+        
   seqLength = getline(&seq, &bytesToRead,referenceFile);
   sumLengths = 0;
   while(seqLength>=0)
@@ -362,35 +573,58 @@ void freeSetting(setting *s)
 	 seqLength = getline(&seq, &bytesToRead,referenceFile);
 }
    
+//    print_selective("1\n");
+   
    if(verbose > 1)
    printf("\nSumLengths = %u\n", sumLengths);
    
    globalVar->referenceSequence = (char*)realloc(globalVar->referenceSequence, (sumLengths+1)*sizeof(char));
    globalVar->referenceSequence[sumLengths] = '\0';
    globalVar->referenceSequenceLength = sumLengths;
+//       print_selective("1\n");
+   globalVar->break_points[globalVar->number_of_references] = sumLengths;//place the first break between reference sequences at the length of the first sequence.
+   
+//    print_selective("2\n");
    
    fclose(referenceFile);
   
    free(seq);
 
+   free(name);
    
  }
     //------------------------------------------------------------------------------------
     
+
     
-    
- void freeGlobalVariables(globalVariables *globalVar)
+ void freeGlobalVariables(setting *arg, globalVariables *globalVar)
  {
   unsigned int i,j;
   
-  free(globalVar->referenceSequence); 
-  
-  free(globalVar->hashTable);
-  
-  freeTable(globalVar->entryTable, globalVar->itemsInTable);
-  free(globalVar->entryTable);
+//   print_selective("1\n");
+    free(globalVar->break_points);
+//    print_selective("3\n");
+    free(globalVar->referenceSequence); 
+//     print_selective("4\n");
+    free(globalVar->hashTable);
+//     print_selective("5\n");
+    freeTable(globalVar->entryTable, globalVar->itemsInTable);
+//       print_selective("6\n");
+    free(globalVar->entryTable);
+//       print_selective("7a\n");
+   
+      for(i = 0; i < globalVar->number_of_references; i++)
+          free(globalVar->reference_names[i]);
 
+    free(globalVar->reference_names);
+
+//   print_selective("7A\n");
+
+//       return;
+    
  // /* Only needed if sequences are really to be stored.
+    if(arg->storeReads)
+    {
   for(i=0; i<globalVar->numReads; i++)
   {
 	Read *r = &(globalVar->read[i]);
@@ -403,6 +637,7 @@ void freeSetting(setting *s)
 //*/
   free(globalVar->read);
 
+//   print_selective("3\n");
     for(i=0; i<globalVar->numAltSequences; i++)
   {
       free(globalVar->altSequences[i].seq);
@@ -410,6 +645,7 @@ void freeSetting(setting *s)
   free(globalVar->altSequences);
   
   
+//   print_selective("4\n");
     
     for(j =0 ; j < globalVar->referenceSequenceLength/50 ; j++)
     {
@@ -424,11 +660,13 @@ void freeSetting(setting *s)
        free(list);
         
     }
-
+ 
+//   print_selective("5\n");
     free(globalVar->numBrokenSequences);   
     free(globalVar->allocatedNumBrokenSequences);
     free(globalVar->brokenSequences);
    
+//   print_selective("6\n");
     for(j =0 ; j < globalVar->referenceSequenceLength/50 ; j++)
     {
     char ** list;
@@ -443,17 +681,43 @@ void freeSetting(setting *s)
         
     }
     
+//   print_selective("7\n");
    free(globalVar->numBrokenSequencesShifted);   
    free(globalVar->allocatedNumBrokenSequencesShifted);
    free(globalVar->brokenSequencesShifted);
    
+    }//close if()arg->storeReads) 
+//   print_selective("8\n");
  }
  
+ 
+    
 void initGlobalVariables(setting *arg, globalVariables *globalVar)
 {
- //int i;
+ int i;
  
+ globalVar->number_of_references = 0;//So far no reference has been added
+ 
+//  globalVar->reference_names = (char**)calloc(globalVar->number_of_references, sizeof(char*));
+ globalVar->reference_names = (char**)calloc(arg->num_multi_references, sizeof(char*));
+ 
+ globalVar->break_points = (int*)calloc(arg->num_multi_references + 1, sizeof(int));//+1 because we have an initial 0
+ globalVar->break_points[0] = 0; //This is redundant and only placed here for explicity
+ 
+ globalVar->referenceSequence = NULL;
+ 
+ print_selective("Reading File [%d]: %s\n", 0, arg->multi_referenceFiles[0]);
  readReferenceFile(arg, globalVar);      
+ 
+    for(i = 1; i < arg->num_multi_references; i++)
+    {
+        print_selective("Reading File [%d]: %s\n", i, arg->multi_referenceFiles[i]);
+//         print_selective("(Next File: %s)\n", arg->multi_referenceFiles[i+1]);
+//          print_selective("(problem File: %s)\n", arg->multi_referenceFiles[45]);
+     read_multiple_ReferenceFiles(arg, globalVar, arg->multi_referenceFiles[i]);
+    }
+    
+ assert(globalVar->number_of_references == arg->num_multi_references);
  
   //allocate initial hash table of POINTERS! for entries.
   globalVar->hashTable = (hashEntry**)calloc(1, sizeof(hashEntry*));
@@ -499,8 +763,10 @@ void initGlobalVariables(setting *arg, globalVariables *globalVar)
   
   //free(reverseComplement);
  
-	// Set up variables to store individual reads
-	globalVar->numReads = 0;
+
+  // Set up variables to store individual reads
+if(arg->storeReads){
+    globalVar->numReads = 0;
 	globalVar->allocatedNumReads = 1024;
 	globalVar->read = (Read*)calloc(globalVar->allocatedNumReads ,sizeof(Read));
 	
@@ -521,6 +787,7 @@ void initGlobalVariables(setting *arg, globalVariables *globalVar)
  //       {
    //         globalVar->read[i].matchesReference = 0;
      //   }
+}
    
  globalVar->trimmed = 0;
  globalVar->kept = 0;
@@ -609,10 +876,17 @@ void initResults(resultsVector *rv, unsigned int length)
 
 void cleanForExit(setting * s, globalVariables * g,  resultsVector * rv)
 {
+    
+//   print_selective("freeing results\n");
   freeResults(rv);
   
-  freeGlobalVariables(g);
   
+//   print_selective("freeing global variables\n");
+  freeGlobalVariables(s, g);
+  
+  
+//   print_selective("freeing settings\n");
   freeSetting(s);
   
+//   print_selective("end\n");
 }
