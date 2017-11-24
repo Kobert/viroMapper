@@ -276,11 +276,12 @@
   
   if(s.num_multi_references > 1 && s.executeReferenceOnly)
   {
-   print_selective("\n[ERROR:] Multiple references given!\n");
-   print_selective("         When testing for suitability via \"-x\", please \n");
-   print_selective("         only submit a single reference sequence.\n");
-   print_selective("         Exiting now!\n");
-   exit(1);   
+   print_selective("\n[Note:] Multiple references given for \'-x\'!\n");
+   
+   print_selective("        Only basic numbers will be calculated.\n");
+   print_selective("        If you wabt to test for suitability via \"-x\", please \n");
+   print_selective("        only submit a single reference sequence.\n\n");
+ 
   }
   
   return s;

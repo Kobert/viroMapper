@@ -361,9 +361,6 @@ initWindow(slidingWindow, seq);
 
         addToHash(slidingWindow, (i - (sizeOfWindow-1)) ,  *hashTable, *entryTable, itemsInTable, &hit, &chained, hashValue, hashTableSize);
 
-        if(i % 10000 == 0)
-            print_selective(" | completion: %f", i/(double)globalVar->referenceSequenceLength);
-	}
 
 
 
