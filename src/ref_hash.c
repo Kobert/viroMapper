@@ -362,6 +362,8 @@ initWindow(slidingWindow, seq);
         addToHash(slidingWindow, (i - (sizeOfWindow-1)) ,  *hashTable, *entryTable, itemsInTable, &hit, &chained, hashValue, hashTableSize);
 
 
+	}
+
 
 
 
