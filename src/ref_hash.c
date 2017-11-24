@@ -35,8 +35,8 @@ void initEntry(hashEntry* entry, unsigned int * val)
 unsigned int i;
 
 entry->inHitList = 0;
-// entry->allocatedHitList = 10; //TODO 10 happens to work for the given dataset. Do not forget to realloc!!!!!
-entry->allocatedHitList = 120; 
+entry->allocatedHitList = 10; 
+// entry->allocatedHitList = 120; 
 entry->hitList = (unsigned int *)calloc(entry->allocatedHitList, sizeof(unsigned int));
 entry->value = (unsigned int *)calloc(_numMulti, sizeof(unsigned int));
 
@@ -183,7 +183,15 @@ void chainHash(unsigned int *slidingWindow, unsigned int sequencePosition, hashE
 				h->repeats++;
 				h->hitList[h->inHitList] = sequencePosition;
 				h->inHitList++;
-				assert(h->inHitList < h->allocatedHitList); //TODO This assertion must be replaced by a check for reallocating the memory!!!!!
+                                
+                                        if(h->inHitList >= h->allocatedHitList)
+                                        {
+                                        h->hitList = (unsigned int *)realloc(h->hitList, (h->allocatedHitList * 2) * sizeof(unsigned int));
+                                        h->allocatedHitList = h->allocatedHitList * 2;
+        
+                                        // 	assert(h->inHitList < h->allocatedHitList); //TODO This assertion must be replaced by a check for reallocating the memory!!!!!
+                                        }
+        
 				
 				(*hit)++;
 				found = 1;
@@ -200,8 +208,9 @@ void chainHash(unsigned int *slidingWindow, unsigned int sequencePosition, hashE
 			initEntry(&g,slidingWindow);
 			g.hitList[0] = sequencePosition;
 			g.inHitList++;//TODO can be set to 1?
-			assert(g.inHitList < g.allocatedHitList); //TODO This assertion must be replaced by a check for reallocating the memory!!!!! 
-                        //TODO really h not g? TODO can be removed without fault since set to 1.
+			assert(g.inHitList < g.allocatedHitList); 
+                        //TODO really h not g? TODO Can be removed without fault since set to 1. Otherwise this assertion must be replaced by a check for reallocating the memory!!!!! 
+                
 			
 			entryTable[*itemsInTable]=g;
 			h->next	 = *itemsInTable;		
@@ -243,8 +252,17 @@ unsigned int pos = hashUI(slidingWindow, hashValue, hashTableSize);
         e->repeats++;
         e->hitList[e->inHitList] = sequencePosition;
 	e->inHitList++;
-	assert(e->inHitList < e->allocatedHitList); //TODO This assertion must be replaced by a check for reallocating the memory!!!!!
-	
+        
+        if(e->inHitList >= e->allocatedHitList)
+        {
+        e->hitList = (unsigned int *)realloc(e->hitList, (e->allocatedHitList * 2) * sizeof(unsigned int));
+        e->allocatedHitList = e->allocatedHitList * 2;
+        
+// 	assert(e->inHitList < e->allocatedHitList); //TODO This assertion must be replaced by a check for reallocating the memory!!!!!
+        }
+        
+        
+        
         (*hit)++;
 	}else{
 		  
@@ -343,6 +361,8 @@ initWindow(slidingWindow, seq);
 
         addToHash(slidingWindow, (i - (sizeOfWindow-1)) ,  *hashTable, *entryTable, itemsInTable, &hit, &chained, hashValue, hashTableSize);
 
+        if(i % 10000 == 0)
+            print_selective(" | completion: %f", i/(double)globalVar->referenceSequenceLength);
 	}
 
 
