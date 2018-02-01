@@ -1242,21 +1242,21 @@ int* positive_placements = (int*)calloc(1 , sizeof(int));
   int result = getMapPostition(s, rv, hitList, whichHit, howManyPos, max_fragments, &positive_placements, &num_placements); 
      
 
-// llpqr instead of this testing stuff, do a single call for a wrapper of all indel cases
-  if(num_placements == 2 && (positive_placements[0] > positive_placements[1])){
-//    alignSingleIndel(strlen(seq), &(g->referenceSequence[positive_placements[0]]), &(g->referenceSequence[positive_placements[1]]), seq);  
-alignSingleInsertion(strlen(seq), &(g->referenceSequence[positive_placements[0]]), &(g->referenceSequence[positive_placements[1]]), seq, positive_placements[0] - positive_placements[1]);  
-
-// Have another look at this, Vincents data has lots of long indels
-// print_selective("placed %u %u\n", positive_placements[0],positive_placements[1]);
-
-// alignAffine();
-if(positive_placements[0] != 4761 && positive_placements[0] != 971)
-{
-    // exit(0);
-}
-// rv->indels++;
-}
+// // llpqr instead of this testing stuff, do a single call for a wrapper of all indel cases
+//   if(num_placements == 2 && (positive_placements[0] > positive_placements[1])){
+// //    alignSingleIndel(strlen(seq), &(g->referenceSequence[positive_placements[0]]), &(g->referenceSequence[positive_placements[1]]), seq);  
+// alignSingleInsertion(strlen(seq), &(g->referenceSequence[positive_placements[0]]), &(g->referenceSequence[positive_placements[1]]), seq, positive_placements[0] - positive_placements[1]);  
+// 
+// // Have another look at this, Vincents data has lots of long indels
+// // print_selective("placed %u %u\n", positive_placements[0],positive_placements[1]);
+// 
+// // alignAffine();
+// // if(positive_placements[0] != 4761 && positive_placements[0] != 971)
+// // {
+//     // exit(0);
+// // }
+// // rv->indels++;
+// }
  if(num_placements > 2){
      
    rv->indels++;
