@@ -795,6 +795,7 @@ if(arg->storeReads){
  globalVar->avgRatioTrimmed = 0.0;
  globalVar->avgTrimmedOf = 0;
   
+ globalVar->number_of_too_short_reads = 0;
 //   time(&timer);
 //   tm_info = localtime(&timer);
 

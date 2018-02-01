@@ -212,6 +212,8 @@ typedef struct
  
  double avgRatioTrimmed;
  unsigned int avgTrimmedOf;
+  
+ unsigned int number_of_too_short_reads;
  
 }globalVariables;
 

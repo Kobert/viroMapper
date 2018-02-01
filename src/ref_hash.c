@@ -1176,8 +1176,11 @@ int placeFragments(setting s, globalVariables* g, resultsVector* rv, hashEntry *
   fragments  = floor( (double)length/(double)basesPerWindow() );
   if(fragments <= 0)
   {
-    fprintf(stderr, "fragments %u, length %u\n", fragments, length);
-  assert(fragments > 0); //TODO if this actually happens, the read is to short and should be ignored/discarded
+//       fprintf(stderr, "sequence: %s\n", seq);
+//     fprintf(stderr, "fragments %u, length %u\n", fragments, length);
+    g->number_of_too_short_reads++;
+    return -1;
+//   assert(fragments > 0); //TODO if this actually happens, the read is too short and should be ignored/discarded
   }
   
 // printf("element 0 before: %d\n", whichHit[0]);

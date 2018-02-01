@@ -217,6 +217,13 @@ print_selective("\t Total trimmed ratio: %.4f (Fraction of sites)\n\n",(double)g
   
   print_selective("There were %u reads containing indels or hybrid data\n\n", rv.indels);
 
+  if(globalVar.number_of_too_short_reads > 0)
+  {
+  print_selective("[WARNING:] %u read(s) were shorter than the chosen k-mere length.\n", globalVar.number_of_too_short_reads);
+  print_selective("           No attempt was made to map these reads.\n\n");
+  }
+  
+  
   printTime();
   print_selective(" Freeing data-structures...\n");
   cleanForExit(&arg, &globalVar,  &rv);
