@@ -30,7 +30,7 @@ int main(int argc, char **argv)
  globalVariables globalVar;
   
  initGlobalVariables(&arg, &globalVar);
- 
+  
  resultsVector rv;
  
  initResults(&rv, strlen(globalVar.referenceSequence));
@@ -39,6 +39,7 @@ int main(int argc, char **argv)
   
   if(arg.executeReferenceOnly)
   {
+      if(arg.num_multi_references == 1)
      testReference(&globalVar, arg);
           
      print_selective("[NOTE:]    \"-x\" set. Exiting now...\n"); 
@@ -48,6 +49,8 @@ int main(int argc, char **argv)
   return 0;   
   }
   
+  
+
 //   Placement placement;
 //   //insertion of 1
 // //   char* t_c = "ACGCGGAGUAGCCTCGUGUGAGCCCC";
@@ -212,6 +215,7 @@ print_selective("\n\t Avg trimmed ratio:   %.4f (Average per read)\n",globalVar.
 print_selective("\t Total trimmed ratio: %.4f (Fraction of sites)\n\n",(double)globalVar.trimmed/(globalVar.trimmed + globalVar.kept));
 } 
   
+  print_selective("There were %u reads containing indels or hybrid data\n\n", rv.indels);
 
   printTime();
   print_selective(" Freeing data-structures...\n");

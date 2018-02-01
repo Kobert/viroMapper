@@ -3,30 +3,45 @@
 
 #include <stdio.h>
 
+
+
+// #define _singleUnsigned
+#define _multiUnsigned
+#define _numMulti 1
+
+
+//setup for A==0001, C==0010, G==0100, T==1000
+// #define basesPerByte 2
+// #define bitsPerBase 4
+
+//setup for A==00, C==01, G==10, T==11, DOES NOT ACCOUNT FOR DEGENERATE BASES!
+#define basesPerByte 4
+#define bitsPerBase 2
+
+//TODO This is experimental. See if it works or remove...
+#define _limitBasesPerWindow 8
+#define _perfectList
+
+
+#ifdef _perfectList
+#define _hashTableSize 65537
+
+#else
 //#define _hashTableSize 10
 //#define _hashTableSize 1327
 //#define _hashTableSize 11777
 //#define _hashTableSize   1002017 
 //#define _hashTableSize 1252159
 // #define _hashTableSize 100003
-#define _hashTableSize 10030037
+// #define _hashTableSize 10030037
+#define _hashTableSize 100300037
+
+#endif
 
 #define _hashValue 37
 //#define _hashValue 1000861
 
 
-//#define _singleUnsigned
-#define _multiUnsigned
-#define _numMulti 1
-
-
-//setup for A==0001, C==0010, G==0100, T==1000
-#define basesPerByte 2
-#define bitsPerBase 4
-
-//setup for A==00, C==01, G==10, T==11, DOES NOT ACCOUNT FOR DEGENERATE BASES!
-//#define basesPerByte 4
-//#define bitsPerBase 2
 
 //#ifdef _32BIT
 FILE* fopen64(const char *filename, const char *type);

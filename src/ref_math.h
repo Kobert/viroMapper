@@ -1,6 +1,8 @@
 #ifndef _REF_MATH
 #define _REF_MATH
 
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
+#define MAX(a,b) ((a) > (b) ? (a) : (b))
 
 long unsigned binom(unsigned int n,unsigned int k);
 

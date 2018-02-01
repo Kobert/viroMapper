@@ -17,7 +17,7 @@
  void map_help()
  {
   printf("\n"); 
-  printf("This is viroMapper v. 0.0.4\n\n"); 
+  printf("This is viroMapper v. 0.0.5\n\n"); 
   printf("Function arguments are:\n"); 
   printf("\n"); 
   printf(" -r <string>       for specifying a file containing the reference sequence (fasta format only)\n");    

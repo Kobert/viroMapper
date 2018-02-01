@@ -12,6 +12,7 @@
 #include "ref_io.h"
 #include "ref_math.h"
 #include "ref_arg.h"
+#include "map_alignment.h"
 
 //------------UTILITIES-FOR-ENTRIES-IN-HASHTABLE-------------------------------------------------------------------------------------------
 
@@ -134,7 +135,8 @@ return (unsigned int)result;
 }
 #endif
 #ifdef _multiUnsigned
-unsigned int hashUI(unsigned int *value, unsigned int hashValue, unsigned int hashTableSize)	//Simple hashing function to hash unsigned integer values to some more managable range.
+
+unsigned int hashUIChained(unsigned int *value, unsigned int hashValue, unsigned int hashTableSize)	//Simple hashing function to hash unsigned integer values to some more managable range.
 {						//Must be changed to something more complex later...
 
 unsigned int i;
@@ -146,6 +148,17 @@ result += value[i]*hashValue;
 
 return (unsigned int)(result % hashTableSize);
 
+}
+
+//Wrapper function
+unsigned int hashUI(unsigned int *value, unsigned int hashValue, unsigned int hashTableSize)	
+{						
+
+#ifdef _perfectList
+return value[0];
+#endif    
+
+return hashUIChained(value, hashValue, hashTableSize);
 }
 #endif
 
@@ -220,6 +233,28 @@ void chainHash(unsigned int *slidingWindow, unsigned int sequencePosition, hashE
 }
 
 
+
+void addToHashChained(unsigned int *slidingWindow, unsigned int sequencePosition, hashEntry **hashTable, hashEntry *entryTable, 
+	       unsigned int *itemsInTable, unsigned int *hit, unsigned int *chained, unsigned int hashValue, unsigned int hashTableSize);
+void addToHashPerfect(unsigned int *slidingWindow, unsigned int sequencePosition, hashEntry **hashTable, hashEntry *entryTable, 
+	       unsigned int *itemsInTable, unsigned int *hit);
+
+void addToHash(unsigned int *slidingWindow, unsigned int sequencePosition, hashEntry **hashTable, hashEntry *entryTable, 
+	       unsigned int *itemsInTable, unsigned int *hit, unsigned int *chained, unsigned int hashValue, unsigned int hashTableSize)
+{
+#ifdef _perfectList
+    
+    addToHashPerfect(slidingWindow, sequencePosition, hashTable, entryTable, itemsInTable, hit);
+    return;
+#endif
+    
+    
+    addToHashChained(slidingWindow, sequencePosition, hashTable, entryTable, 
+	       itemsInTable, hit, chained, hashValue, hashTableSize);
+}
+
+
+
 //Hashing procedure. 
 //-Get hash position
 //-check if position is empty
@@ -230,7 +265,7 @@ void chainHash(unsigned int *slidingWindow, unsigned int sequencePosition, hashE
 //  -add to frequency
 //-No match
 //  -add to list and establish chain
-void addToHash(unsigned int *slidingWindow, unsigned int sequencePosition, hashEntry **hashTable, hashEntry *entryTable, 
+void addToHashChained(unsigned int *slidingWindow, unsigned int sequencePosition, hashEntry **hashTable, hashEntry *entryTable, 
 	       unsigned int *itemsInTable, unsigned int *hit, unsigned int *chained, unsigned int hashValue, unsigned int hashTableSize)
 {
   
@@ -271,6 +306,46 @@ unsigned int pos = hashUI(slidingWindow, hashValue, hashTableSize);
 	}
         //NOTE this seems to have been a gigantic mistake!
 //         chainHash(slidingWindow, sequencePosition, entryTable, itemsInTable, e, hit, chained);
+	  
+	}
+	
+}
+
+
+
+//This function assumes that no two elements can hit the same hashing position. 
+void addToHashPerfect(unsigned int *slidingWindow, unsigned int sequencePosition, hashEntry **hashTable, hashEntry *entryTable, 
+	       unsigned int *itemsInTable, unsigned int *hit)
+{
+  
+unsigned int pos = hashUI(slidingWindow, 0, 0);
+	if(hashTable[pos]==NULL)
+	{
+		  
+	  addNewToHashtable(pos, slidingWindow, sequencePosition, hashTable,  entryTable, itemsInTable);
+		  
+	}else{
+		  
+	hashEntry *e=hashTable[pos];
+
+
+
+	
+//	printEntry(*e);
+        e->repeats++;
+        e->hitList[e->inHitList] = sequencePosition;
+	e->inHitList++;
+        
+        if(e->inHitList >= e->allocatedHitList)
+        {
+        e->hitList = (unsigned int *)realloc(e->hitList, (e->allocatedHitList * 2) * sizeof(unsigned int));
+        e->allocatedHitList = e->allocatedHitList * 2;
+        }
+        
+        
+        
+        (*hit)++;
+
 	  
 	}
 	
@@ -356,14 +431,19 @@ initWindow(slidingWindow, seq);
 	for(i= sizeOfWindow-1 ; i<strlen(seq) ; i++)//Go through the whole sequence. not -1 because they are trimmed
 	{
 	pushToWindow(slidingWindow, seq[i]);
+        
 	    if(verbose > 1)
+            {
 	    printWindow(slidingWindow);
-
+            printf("Reference: %u\n", slidingWindow[0]);
+            }
+            
         addToHash(slidingWindow, (i - (sizeOfWindow-1)) ,  *hashTable, *entryTable, itemsInTable, &hit, &chained, hashValue, hashTableSize);
 
-
+//         if(i % 10000 == 0)
+                    if(i % 30000 == 0)
+            print_selective(" | completion: %f", i/(double)globalVar->referenceSequenceLength);
 	}
-
 
 
 
@@ -396,9 +476,11 @@ return chained;
 
 
 //--Look-up-hashtable-entries--------------------------------------------------------------------------------------------
-int getMapPostition(setting s, resultsVector* rv, unsigned int *hitList, unsigned int *whichHit, unsigned int howManyPos, unsigned int* max_fragments)
+int getMapPostition_OLD(setting s, resultsVector* rv, unsigned int *hitList, unsigned int *whichHit, unsigned int howManyPos, unsigned int* max_fragments, int** positive_positions, int* num_positive_positions)
 {
 //       print_selective("1 gMP\n");
+    *num_positive_positions = 0;
+    
   unsigned int max = 0;
   int whichMax = -1;
   unsigned int i;
@@ -451,6 +533,9 @@ int getMapPostition(setting s, resultsVector* rv, unsigned int *hitList, unsigne
 //       print_selective("3 for\n");
   }
   
+  
+//   num_positive_positions = count;
+//   positive_positions = (int**)realloc(positive_positions, sizeof(int*)*count);
   
 //       print_selective("2 gMP\n");
 //   print_selective("\n");
@@ -507,10 +592,80 @@ int getMapPostition(setting s, resultsVector* rv, unsigned int *hitList, unsigne
 		      //			3 is better 			length ref: 10700, length frag 400, num frag 3, p value: 0.0000007169 
 		      //             max > 3 for refLength 10700, sequencelength <= 500 gives 10^-9 (4*10^-10)
 		      //		Results regarding coverage do not change much compared to max >2. However, less Zika is assembled for Dengue reference -> ++
-	if(whichMax < 10724)
-        good_hit++;
-        else
-        bad_hit++;
+// 	if(whichMax < 10724)
+//         good_hit++;
+//         else
+//         bad_hit++;
+            
+        return whichMax;
+	}
+  
+  return -1;
+}
+
+
+int getMapPostition(setting s, resultsVector* rv, unsigned int *hitList, unsigned int *whichHit, unsigned int howManyPos, unsigned int* max_fragments, int** positive_positions, int* num_positive_positions)
+{
+    *num_positive_positions = 0;
+    
+  unsigned int max = 0;
+  int whichMax = -1;
+  unsigned int i,c;
+  
+  unsigned int count = 0;
+
+  for(i = 0; i<howManyPos; i++)
+  {
+   
+
+       if(hitList[whichHit[i]] >= s.minFracs)
+    {
+        count++;
+      
+    }
+    
+    if(hitList[whichHit[i]] > max)
+    {
+     max =  hitList[whichHit[i]];
+     whichMax = whichHit[i];
+    }
+    
+  }
+  
+  *num_positive_positions = count;
+//   free(*positive_positions);
+//    *positive_positions = (int*)realloc(*positive_positions, sizeof(int)*count);
+//   *positive_positions = (int*)calloc(count , sizeof(int));
+//   print_selective("in Fct: %d\n", *num_positive_positions);
+  
+  int* temp = (int*)calloc(count , sizeof(int));
+  c = 0;
+    for(i = 0; i<howManyPos; i++)
+  {
+    if(hitList[whichHit[i]] >= s.minFracs)
+    {
+//         print_selective("%d (%d)\n", c, count);
+    temp[c] = (int)whichHit[i];  
+//     *positive_positions[c] = (int)whichHit[i];   
+    c++;    
+    }
+  }
+  
+    free(*positive_positions);
+    *positive_positions = temp;
+    
+//   print_selective("out loop\n");
+  *max_fragments = max;
+
+
+
+  
+	if(max >= s.minFracs)          //TODO find actual criteria! 2 is somewhat good already. 	length ref: 10700, length frag 100, num frag 2, p value: 0.000162873
+	{	                     //							length ref: 10700, length frag 400, num frag 2, p value: 0.0029322845 
+                                //			3 is better 			length ref: 10700, length frag 400, num frag 3, p value: 0.0000007169 
+                                //             max > 3 for refLength 10700, sequencelength <= 500 gives 10^-9 (4*10^-10)
+                                //		Results regarding coverage do not change much compared to max >2. However, less Zika is assembled for Dengue reference -> ++
+
             
         return whichMax;
 	}
@@ -550,8 +705,33 @@ int checkMismatches(setting s, unsigned int *hitList, unsigned int *whichHit, un
   return 0;
 }
 
-//For a fragment, check if it matched a hash entry. If it does, note down the possible positions that result from this.
+
+
+int checkHashChained(hashEntry ** hashTable, hashEntry * entryTable, unsigned int * window,  
+	      unsigned int *hitTable, unsigned int **whichHitP, unsigned int * num_allocated_whichHit, unsigned int *howManyPos, unsigned int fragmentNumber);
+int checkHashPerfect(hashEntry ** hashTable, hashEntry * entryTable, unsigned int * window,  
+	      unsigned int *hitTable, unsigned int **whichHitP, unsigned int * num_allocated_whichHit, unsigned int *howManyPos, unsigned int fragmentNumber);
+
+//Wrapper function
 int checkHash(hashEntry ** hashTable, hashEntry * entryTable, unsigned int * window,  
+	      unsigned int *hitTable, unsigned int **whichHitP, unsigned int * num_allocated_whichHit, unsigned int *howManyPos, unsigned int fragmentNumber)
+{
+    
+#ifdef _perfectList
+    return checkHashPerfect(hashTable, entryTable, window,  
+	      hitTable, whichHitP, num_allocated_whichHit, howManyPos, fragmentNumber);
+#endif
+    
+    
+    return checkHashChained(hashTable, entryTable, window,  
+	      hitTable, whichHitP, num_allocated_whichHit, howManyPos, fragmentNumber);
+
+    
+}
+
+
+//For a fragment, check if it matched a hash entry. If it does, note down the possible positions that result from this.
+int checkHashChained(hashEntry ** hashTable, hashEntry * entryTable, unsigned int * window,  
 	      unsigned int *hitTable, unsigned int **whichHitP, unsigned int * num_allocated_whichHit, unsigned int *howManyPos, unsigned int fragmentNumber)
 {
     unsigned int *whichHit = *whichHitP;
@@ -657,6 +837,58 @@ int checkHash(hashEntry ** hashTable, hashEntry * entryTable, unsigned int * win
 
 
 	}
+   }
+   return 0;  
+}
+
+
+
+//For a fragment, check if a hash entry exists in the list. If it does, note down the possible positions that result from this.
+int checkHashPerfect(hashEntry ** hashTable, hashEntry * entryTable, unsigned int * window,  
+	      unsigned int *hitTable, unsigned int **whichHitP, unsigned int * num_allocated_whichHit, unsigned int *howManyPos, unsigned int fragmentNumber)
+{
+    unsigned int *whichHit = *whichHitP;
+  unsigned int i;
+   unsigned int pos = hashUI(window, _hashValue, _hashTableSize);
+   int sequencePosition;
+    
+   if(hashTable[pos] != NULL)
+   {
+    
+     	hashEntry *e=hashTable[pos];
+
+	  assert(e->inHitList > 0);
+	  for(i = 0; i<e->inHitList; i++)
+	  {
+	    sequencePosition = e->hitList[i] - fragmentNumber * basesPerWindow(); 
+	    if(sequencePosition < 0)//TODO actually check overlap here!
+	    { 
+	      continue;
+	    }
+	    
+	    
+	    if(hitTable[sequencePosition ] == 0)
+	    {
+                while(*howManyPos >= *num_allocated_whichHit)  //A simple if() might also suffice instead of while(). But this should be safer still.
+                {
+                    *num_allocated_whichHit = *num_allocated_whichHit *2;
+
+                    whichHit = (unsigned int *)realloc(whichHit, *num_allocated_whichHit * sizeof(unsigned int));
+                   assert(whichHit && "whichHit could not be reallocated");
+
+                    *whichHitP = whichHit;
+                }
+                
+	     whichHit[*howManyPos] = sequencePosition;
+	  
+	    (*howManyPos)++; 
+            
+	    }
+	    hitTable[sequencePosition ]++;
+
+	  }
+	return 1;
+	
    }
    return 0;  
 }
@@ -952,8 +1184,33 @@ int placeFragments(setting s, globalVariables* g, resultsVector* rv, hashEntry *
   for(i=0; i<fragments ;i++)
   {
     pos = i * basesPerWindow() + firstPosition;
+#ifdef _perfectList
+//     print_selective("in\n");
+    makeWindowDeterministicDegenerate(window, seq, pos, 0);
+//         print_selective("START------------------------------------\n");
+//     printWindow(window);//TODO llpqr
+//     print_selective("%.*s\n", 8, seq + pos);
+//     makeWindow(window, seq, pos);
+//     printWindow(window);
+//     print_selective("------------------------------------\n");
+//     print_selective("out\n");
+#else
     makeWindow(window, seq, pos);
+#endif    
+
     
+#ifdef _perfectList
+//     printWindow(window);//TODO llpqr
+//     printf("%u\n", window[0]);
+    assert(window[0] < 65536);
+        if(checkHash(hashTable, entryTable, window, hitList, &whichHit, &num_allocated_whichHit, &howManyPos, i))
+        {
+        localHitPerRound++;
+        lhit++;
+        }else{
+        lmiss++; 
+        }
+#else    
   if(checkHash(hashTable, entryTable, window, hitList, &whichHit, &num_allocated_whichHit, &howManyPos, i))
   {
       localHitPerRound++;
@@ -961,6 +1218,7 @@ int placeFragments(setting s, globalVariables* g, resultsVector* rv, hashEntry *
     }else{
      lmiss++; 
     }
+#endif
 //    if(i==0)
 //        printf("element 0 during: %d\n", whichHit[0]);
 
@@ -977,8 +1235,35 @@ int placeFragments(setting s, globalVariables* g, resultsVector* rv, hashEntry *
   
 assert(whichHit[0] <= strlen(g->referenceSequence) && "whichHit has too large an entry");
 
-  int result = getMapPostition(s, rv, hitList, whichHit, howManyPos, max_fragments); 
+int num_placements = 0;
+int* positive_placements = (int*)calloc(1 , sizeof(int));
+
+
+  int result = getMapPostition(s, rv, hitList, whichHit, howManyPos, max_fragments, &positive_placements, &num_placements); 
      
+
+// llpqr instead of this testing stuff, do a single call for a wrapper of all indel cases
+  if(num_placements == 2 && (positive_placements[0] > positive_placements[1])){
+//    alignSingleIndel(strlen(seq), &(g->referenceSequence[positive_placements[0]]), &(g->referenceSequence[positive_placements[1]]), seq);  
+alignSingleInsertion(strlen(seq), &(g->referenceSequence[positive_placements[0]]), &(g->referenceSequence[positive_placements[1]]), seq, positive_placements[0] - positive_placements[1]);  
+
+// Have another look at this, Vincents data has lots of long indels
+// print_selective("placed %u %u\n", positive_placements[0],positive_placements[1]);
+
+// alignAffine();
+if(positive_placements[0] != 4761 && positive_placements[0] != 971)
+{
+    // exit(0);
+}
+// rv->indels++;
+}
+ if(num_placements > 2){
+     
+   rv->indels++;
+ }
+ 
+
+  free(positive_placements);
   //if( !checkMismatches(s, hitList, whichHit, howManyPos, seq, 3) )
   //{
   //  result = -1;
@@ -1455,6 +1740,8 @@ void cleanHashMapReadsWithKey(setting arg, globalVariables *globalVar, resultsVe
 								 100.0*(double)numReverseMatches/numReads, 
 								 100.0*(double)numShiftedMatches/numReads);
   
+  
+  print_selective("Indels: %u\n", rv->indels);
   //Free allocated data structures
   fclose(samFile);
   

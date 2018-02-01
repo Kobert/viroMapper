@@ -107,15 +107,20 @@ else if(bitsPerBase == 2)
 
 	case 'T':
 	case 't':
+        case 'U':
+        case 'u':
 	return 3;
 
 	default:
-	fprintf(stderr, "\nInvalid character passed to mapUnsafe function c = \"%c\". \n (Degenerate characters are not possible under this setting)\n",c);
-	assert(0);
+            return -1;
+// 	fprintf(stderr, "\nInvalid character passed to mapUnsafe function c = \"%c\". \n (Degenerate characters are not possible under this setting)\n",c);
+// 	assert(0);
 	}
 }
 
 }
+
+
 
 unsigned int map(char c)
 {
@@ -125,16 +130,37 @@ unsigned int map(char c)
   
   fprintf(stderr, "\nInvalid character passed to map function c = \"%c\".\n",c);
     
-    if(bitsPerBase == 2)
+    if(bitsPerBase == 2 && isDegenerateCharacter(c))
     fprintf(stderr, "(Note that degenerate characters are not possible under current setting)\n");
 	
   assert(0);
 	
   return 0;
   
-  
 }
-char reMap(unsigned int n) //Recover actual base from number
+
+
+//This function is meant to be used together with the 2 bitsPerBase model to not break on degenerate characters.
+int mapIgnoreDegenerate(char c)
+{
+    int result = mapUnsafe(c); 
+    
+        if(result >= 0)
+        return result;
+        
+        if(isDegenerateCharacter(c))
+        return -1;
+        
+  fprintf(stderr, "\nInvalid character passed to map function c = \"%c\".\n",c);
+  assert(0);
+  
+  return -2;
+}
+
+
+
+// char reMap(unsigned int n) //Recover actual base from number
+char reMap(int n) //Recover actual base from number
 {
 
 if(bitsPerBase == 4)
@@ -189,6 +215,8 @@ switch(n)
 	return 'G';
 	case 3:
 	return 'T';
+        case -1:
+	return 'N';
 	default:
 	fprintf(stderr, "invalid character passed to reMap() function. (Degenerate characters are not implemented yet...)\n");
 	fprintf(stderr, "Number passed: %u\n",n);
@@ -197,6 +225,124 @@ switch(n)
 	}
 }
 
+}
+
+unsigned int isDegenerateCharacter(char c)
+{
+    switch(c)
+	{
+	case 'A':
+	case 'a':
+	case 'C':
+	case 'c':
+	case 'G':
+	case 'g':
+	case 'T':
+	case 't':
+        case 'U':
+	case 'u':
+ 	return 0;           
+            
+
+	case 'N':
+	case 'X':
+	case '-':
+	case 'W':
+	case 'w':
+	case 'S':
+	case 's':
+	case 'M':
+	case 'm':
+	case 'K':
+	case 'k':
+	case 'R':
+	case 'r':
+	case 'Y':
+	case 'y':
+	case 'B':
+	case 'b':
+	case 'd':
+	case 'D':
+	case 'H':
+	case 'h':
+	case 'V':
+	case 'v':
+	return 1;
+	
+	default:
+	return -1;
+	}
+}
+
+char pickDegenerate(char c, unsigned int roll, unsigned int i)
+{
+    int num = 0;
+    char which[] = "ACGT";
+        switch(c)
+	{
+ 	case 'N':
+	case 'X':
+        case '-'://ACGT
+            num = 4;
+            break;
+        case 'W':
+	case 'w'://A,T
+            num = 2;
+            which[1]='T';
+            break;
+        case 'S':
+	case 's'://GC
+	    num = 2;
+            which[0]='G';
+            break;
+        case 'M':
+	case 'm'://AC
+	    num = 2;
+            break;
+        case 'K':
+	case 'k'://GT
+	    num = 2;
+            which[0]='G';
+            which[1]='T';
+            break;
+        case 'R':
+	case 'r'://AG
+	    num = 2;
+            which[1]='G';
+            break;
+        case 'Y':
+	case 'y'://TC
+            num = 2;
+            which[0]='T';
+            break;
+        case 'B':
+	case 'b'://TCG
+	    num = 3;
+            which[0]='T';
+            break;
+        case 'd':
+	case 'D'://ATG
+	    num = 3;
+            which[1]='T';
+            break;
+	case 'H':
+	case 'h'://ACT
+	    num = 3;
+            which[2]='T';
+            break;
+	case 'V':
+	case 'v': //ACG
+            num = 3;
+            break;
+            
+        default:
+            assert(0);
+            
+        }
+    
+    int mod = (roll + i) % num;
+    
+    return which[mod];
 }
 
 char complementDNA(char c)
@@ -278,11 +424,20 @@ char complementDNA(char c)
 
 //------------UTILITIES-FOR-SLIDINGWINDOW-----------------------------------------------------------------------------------------------------------
 
+
+
 // Function returns the number of bases per part of the slidingwindow. 
 // The slidingWindow is seperated into chunks that are easy to handle by the maschine (for example 4 * 8 bit for one unsigned int).
 unsigned int basesPerPart()
-{
- return (sizeof(unsigned int) * basesPerByte);
+{ 
+    
+    if(sizeof(unsigned int) * basesPerByte < _limitBasesPerWindow)
+    {
+    return (sizeof(unsigned int) * basesPerByte);
+    }else{
+    return _limitBasesPerWindow;
+    }
+        
 }
 
 //Function returns the number of bases in the overall window.
@@ -292,6 +447,29 @@ unsigned int basesPerWindow()
   unsigned int _numMulti =1;
 #endif
   return (basesPerPart() * _numMulti); 
+}
+
+//Build a mask to limit the number of meaningful positions with an & operation. E.g. 0000 0000 1111 1111
+unsigned int makeMask()
+{
+  int i, j;
+    
+  unsigned int num = basesPerPart();  
+    
+  unsigned int result = 0;
+
+        for(i=0 ; i < num ; i++)
+        {
+            for(j = 0 ; j < bitsPerBase ; j++)
+            {
+                                    // 0000 0000 0111 1111
+            result = result << 1;   // 0000 0000 1111 1110
+            result = result + 1;    // 0000 0000 1111 1111
+            }
+        }
+    
+    
+    return result;
 }
 
 
@@ -363,8 +541,12 @@ return reMap(result);
 void pushToWindow(unsigned int *before, char add)	//before should contain a list of bases. Each base takes  bitsPerBase bits space. 
 							// Thus, we make room for a new base by shifting  bitsPerBase positions. Then we simply add the new base to the freed slots.
 {
+    
+
 unsigned int after=*before;
 
+unsigned int mask = makeMask();
+  
 after = (after << bitsPerBase);
 if(bitsPerBase == 4)
 {
@@ -375,7 +557,7 @@ assert((after & 3)==0);
 
 after = after + map(add);
 
-*before=after;
+*before=after & mask;
 }
 #endif
 #ifdef _multiUnsigned
@@ -389,6 +571,8 @@ void pushToWindow(unsigned int *before, char add)	//before should contain a list
   
   unsigned int sizeOfWindow  = basesPerPart();//sizeof(unsigned int) * basesPerByte; 
   
+  unsigned int mask = makeMask();
+  
   for(j = _numMulti -1 ;j>0  ;j--)
   {
     after=before[j];
@@ -396,11 +580,12 @@ void pushToWindow(unsigned int *before, char add)	//before should contain a list
   
     after = (after << bitsPerBase);
     
+    //TODO 15 or 3!!!!
     assert((after & 15)==0);
   
     after = after + topUp;
 
-    before[j] = after;
+    before[j] = after & mask;
   }
   
   
@@ -416,7 +601,8 @@ assert((after & 3)==0);
 
 after = after + map(add);
 
-before[0]=after;
+before[0]=after & mask;
+
 }
 #endif
 
@@ -562,11 +748,32 @@ void makeWindow(unsigned int * window, char * seq, unsigned int pos)
 {
 unsigned int i;
     unsigned int sizeOfWindow  = basesPerWindow();//sizeof(unsigned int) * basesPerByte;
-    for(i=0; i< sizeOfWindow; i++)//add the first lements to the sliding window. However, leave room for one more to add.
+    for(i=0; i< sizeOfWindow; i++)//add the first elements to the sliding window. 
 	{
 	assert(pos+i < strlen(seq));
 	pushToWindow(window, seq[pos+i]);
 	}
+//	  printWindow(window);
+}
+
+void makeWindowDeterministicDegenerate(unsigned int * window, char * seq, unsigned int pos, unsigned int roll)
+{
+unsigned int i;
+char         c;
+    unsigned int sizeOfWindow  = basesPerWindow();//sizeof(unsigned int) * basesPerByte;
+    for(i=0; i< sizeOfWindow; i++)//add the first elements to the sliding window. 
+	{
+	assert(pos+i < strlen(seq));
+        c = seq[pos+i];
+            if(isDegenerateCharacter(c))
+            {
+              c = pickDegenerate(c, roll, i);
+            }
+        
+        pushToWindow(window, c);
+            
+	}
+	
 //	  printWindow(window);
 }
 //--------------------------------------------------------------------------------------
@@ -844,8 +1051,8 @@ char c;
 //Forward unaligned region
 for(i = 0; i<outOf; i++)
  {
-   c = reMap(map(seq[i]));
-   if(c==reMap(map(var->referenceSequence[whichPos + i])))
+   c = reMap(mapUnsafe(seq[i]));
+   if(c==reMap(mapUnsafe(var->referenceSequence[whichPos + i])))
    {
    last[i]=1;
    sum++;     
@@ -859,8 +1066,8 @@ for(i = 0; i<outOf; i++)
  {
    sum = sum - last[count];
    
-   c = reMap(map(seq[i])); 
-  if(c==reMap(map(var->referenceSequence[whichPos + i])))
+   c = reMap(mapUnsafe(seq[i])); 
+  if(c==reMap(mapUnsafe(var->referenceSequence[whichPos + i])))
    {
    last[count]=1;
    sum++;     
@@ -884,9 +1091,9 @@ sum =0;
 
 for(i = 0; i<outOf; i++)
  {
-   c = reMap(map(seq[strlen(seq) - i -1]));
+   c = reMap(mapUnsafe(seq[strlen(seq) - i -1]));
    
-   if(c==reMap(map(var->referenceSequence[whichPos + strlen(seq) - i -1])))
+   if(c==reMap(mapUnsafe(var->referenceSequence[whichPos + strlen(seq) - i -1])))
    {
    last[i]=1;
    sum++;     
@@ -899,8 +1106,8 @@ for(i = 0; i<outOf; i++)
  while(sum < hit && i < strlen(seq))
  {
    sum = sum - last[count];
-   c = reMap(map(seq[strlen(seq) - i -1]));
-   if(c==reMap(map(var->referenceSequence[whichPos + strlen(seq) - i -1])))
+   c = reMap(mapUnsafe(seq[strlen(seq) - i -1]));
+   if(c==reMap(mapUnsafe(var->referenceSequence[whichPos + strlen(seq) - i -1])))
    {
    last[count]=1;
    sum++;     
@@ -951,17 +1158,17 @@ if(0 &&( *start > 0 || *end<strlen(seq)))
   printf("\n");
   
       for(i=0;i<*start;i++)
-	  printf("%c",reMap(map(var->referenceSequence[whichPos + i])));
+	  printf("%c",reMap(mapUnsafe(var->referenceSequence[whichPos + i])));
       
         printf(" || ");
       
   for(i=*start;i<*end;i++)
-  printf("%c",reMap(map(var->referenceSequence[whichPos + i])));
+  printf("%c",reMap(mapUnsafe(var->referenceSequence[whichPos + i])));
   
     printf(" || ");
     
       for(i=*end;i<strlen(seq);i++)
-	  printf("%c",reMap(map(var->referenceSequence[whichPos + i])));
+	  printf("%c",reMap(mapUnsafe(var->referenceSequence[whichPos + i])));
       
     printf("\n");
     printf("Which pos = %u, strlen = %lu length of ref = %lu.\n",whichPos, (long unsigned)strlen(seq), (long unsigned)strlen(var->referenceSequence));

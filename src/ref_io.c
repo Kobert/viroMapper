@@ -107,6 +107,8 @@ void readToResult(resultsVector *rv, char * seq, unsigned int pos, unsigned int 
     result* r = &(rv->results[pos + i]);
    
     char c = seq[i];
+    
+
        switch (c)
       {
       case 'A':
@@ -132,6 +134,26 @@ void readToResult(resultsVector *rv, char * seq, unsigned int pos, unsigned int 
       case 'N':
       case 'X':
       case '-':
+      case 'W':
+      case 'w':
+      case 'S':
+      case 's':
+      case 'M':
+      case 'm':
+      case 'K':
+      case 'k':
+      case 'R':
+      case 'r':
+      case 'Y':
+      case 'y':
+      case 'B':
+      case 'b':
+      case 'd':
+      case 'D':
+      case 'H':
+      case 'h':
+      case 'V':
+      case 'v':
 	   r->coverage ++;
 	r->N++;
 	break;

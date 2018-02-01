@@ -5,7 +5,10 @@ int mapUnsafe(char c);
 
 unsigned int map(char c);
 
-char reMap(unsigned int n);
+// char reMap(unsigned int n);
+char reMap(int n);
+
+unsigned int isDegenerateCharacter(char c);
 
 unsigned int basesPerWindow();
 
@@ -20,6 +23,8 @@ void reverseComplementSequence(char *complement, char* original);
 void reverseSequence(char *complement, char* original);
 
 void makeWindow(unsigned int * window, char * seq, unsigned int pos);
+
+void makeWindowDeterministicDegenerate(unsigned int * window, char * seq, unsigned int pos, unsigned int roll);
 
 double evalStatisticExpensive(char * reference, char * querry, unsigned int length);
 
