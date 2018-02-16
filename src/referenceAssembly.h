@@ -68,6 +68,8 @@ char* dataInFile;
 char* outFilePrefix;
 int qFloor;
 
+unsigned int printSAM;
+
 unsigned int doCsvFile;
 unsigned int doGnuplotFile;
 unsigned int concealResults;

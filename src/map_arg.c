@@ -28,6 +28,7 @@
   printf(" -o <Path/string>  specify a prefix for the output names (can include a path).\n");  
   printf("                   If no Prefix is provided, only generic temporary files will be written.\n");
   printf("\n");    
+  printf(" -a                Print alignment information in SAM format to stdout.\n");
   printf(" -c                Print results in form of a *.csv file.\n");
   printf("                   A path should be provided with -o for this option.\n");    
   printf(" -g                Plot results in Gnuplot.\n");
@@ -65,6 +66,8 @@
   s.mapOnly = 1;
   s.primes  = 0;
   
+  s.printSAM = 0;
+   
   s.storeReads = 0;
 
 #ifdef _multiUnsigned
@@ -101,7 +104,7 @@
   s.qFloor = -1;
 
 
-  while ((c = getopt (argc, argv, "cdef:ghmr:s:tpw:o:q:xyz")) != -1)
+  while ((c = getopt (argc, argv, "acdef:ghmr:s:tpw:o:q:xyz")) != -1)
   {          
     switch (c)
       {
@@ -109,6 +112,9 @@
 	map_help();
 	exit(1);
 	break;
+      case 'a':
+        s.printSAM = 1;  
+        break;
       case 'c':
 	s.doCsvFile = 1;
 	break;	
@@ -267,7 +273,7 @@
    print_selective("           A generict temporary file will be written.\n");
   }
   
-    if(!s.doGnuplotFile && !s.doCsvFile && !s.executeReferenceOnly && !s.writeConsensus )//TODO add any new output formats here
+    if(!s.doGnuplotFile && !s.doCsvFile && !s.executeReferenceOnly && !s.writeConsensus && !s.printSAM)//TODO add any new output formats here
   {
    print_selective("\n[Note:] No output format specified.\n ");   
    print_selective("        Only basic statistics will be printed to the screen.\n ");

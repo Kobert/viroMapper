@@ -1490,10 +1490,14 @@ void cleanHashMapReadsWithKey(setting arg, globalVariables *globalVar, resultsVe
       assert(readsFile);
   }
   
-  FILE *samFile;
-  samFile = fopen("_temp_placeholder_sam.sam","w");
-  printSamHeader(samFile, "Reference_Name", globalVar->referenceSequenceLength);
-  
+//   FILE *samFile;
+//   samFile = fopen("_temp_placeholder_sam.sam","w");
+if(arg.printSAM)
+{
+  printSamHeader("Reference_Name", globalVar->referenceSequenceLength);
+}
+
+
   //Allocate space for short reads and complement thereof
  // unsigned int bytesToRead = 10;
   size_t bytesToRead = 10;
@@ -1686,7 +1690,12 @@ void cleanHashMapReadsWithKey(setting arg, globalVariables *globalVar, resultsVe
 	          qualityToResult(rv, &(seqQ[an]), whichPos+an, bn -an);
 // 		  printf("%s\n\n", seqQ);
                   if(bn > an)
-                    printSamLine( (whichPos+an), "Reference_Name", &seq_name[1], &(result[an]), &(seqQ[an]), (bn -an),  matchReverse, mappingQuality, NULL); 
+                  {
+                        if(arg.printSAM)
+                        {
+                        printSamLine( (whichPos+an), "Reference_Name", &seq_name[1], &(result[an]), &(seqQ[an]), (bn -an),  matchReverse, mappingQuality, NULL); 
+                        }
+                  }
 //                   sumDifferentQs(&(globalVar->referenceSequence[whichPos]), result, seqQ,  strlen(seq));
                   
 		    if( arg.storeReads )
@@ -1708,9 +1717,11 @@ void cleanHashMapReadsWithKey(setting arg, globalVariables *globalVar, resultsVe
 		    }
 		  qualityToResult(rv, seqQ, whichPos, strlen(seq)); 
 		  
-
+                    if(arg.printSAM)
+                    {
                     printSamLine( whichPos, "Reference_Name", &seq_name[1], result, seqQ, strlen(result),  matchReverse, mappingQuality, NULL); 
-
+                    }
+                    
 		    if( arg.storeReads )
 		    {
 		  //  storeSequence(globalVar, rv, result, whichPos, strlen(seq));
@@ -1724,7 +1735,10 @@ void cleanHashMapReadsWithKey(setting arg, globalVariables *globalVar, resultsVe
 //	  printf("Unmatched Position: %d\n", whichPos);
             readDiff = 2;
             getNthLine(readDiff, readsFile, &seqQ, &bytesToReadQ);
-	    printSamLine( -1, "Reference_Name", &seq_name[1], seq, seqQ, strlen(seq),  0, mappingQuality, NULL); 
+                if(arg.printSAM)
+                {
+                printSamLine( -1, "Reference_Name", &seq_name[1], seq, seqQ, strlen(seq),  0, mappingQuality, NULL);
+                }
 
 	    
 	  }
@@ -1746,7 +1760,7 @@ void cleanHashMapReadsWithKey(setting arg, globalVariables *globalVar, resultsVe
   
   print_selective("Indels: %u\n", rv->indels);
   //Free allocated data structures
-  fclose(samFile);
+//   fclose(samFile);
   
   fclose(readsFile);
   

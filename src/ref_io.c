@@ -1007,7 +1007,7 @@ void printSamLine(int position, char* referenceName, char* name, char* seq, char
     fflush(stdout);
 }
 
-void printSamHeader(FILE* file, char* nameReference, unsigned int referenceLength)
+void printSamHeader(char* nameReference, unsigned int referenceLength)
 {
     printf("@HD\tVN:1.0\tSO:unsorted\n");
     printf("@SQ\tSN:%s\tLN:%u\n", nameReference, referenceLength);

@@ -39,5 +39,5 @@ void printAvgCoverage(setting arg, resultsVector rv);
 
 void printSamLine(int position, char* referenceName, char* name, char* seq, char* qual, int lenght,  unsigned int isComplemented, unsigned int mapping_quality, Placement* placement);
 
-void printSamHeader(FILE* file, char* nameReference, unsigned int referenceLength);
+void printSamHeader(char* nameReference, unsigned int referenceLength);
 #endif
