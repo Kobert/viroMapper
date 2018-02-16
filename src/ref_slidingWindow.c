@@ -336,6 +336,7 @@ char pickDegenerate(char c, unsigned int roll, unsigned int i)
             break;
             
         default:
+            print_selective("Character passed \"%c\"\n",c);
             assert(0);
             
         }
