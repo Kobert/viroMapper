@@ -1263,6 +1263,8 @@ int* positive_placements = (int*)calloc(1 , sizeof(int));
  if(num_placements > 2){
      
    rv->indels++;
+//    For testing discard indels..
+   result = -1;
  }
  
 
@@ -1663,7 +1665,7 @@ if(arg.printSAM)
 		  {
 		  unsigned int an,bn;
 		  trimRegions(arg, globalVar, result, whichPos, &an, &bn);
-		  readToResult(rv, &(result[an]), whichPos+an, bn -an); 
+// 		  readToResult(rv, &(result[an]), whichPos+an, bn -an); 
                     
                   
 //             printf("%lu %d %.2f %.2f\n", strlen(seq), (bn-an), evalStatisticExpensive(&(globalVar->referenceSequence[whichPos]), result, strlen(seq)), evalStatisticExpensive(&(globalVar->referenceSequence[whichPos+ an]), &(result[an]), bn -an));
@@ -1687,6 +1689,8 @@ if(arg.printSAM)
 		    {
 		    reverseSequence(seqQ, seqQ);  
 		    }
+		    
+		  readToResult_quality_aware(rv, &(result[an]),  &(seqQ[an]), whichPos+an, bn -an); 
 	          qualityToResult(rv, &(seqQ[an]), whichPos+an, bn -an);
 // 		  printf("%s\n\n", seqQ);
                   if(bn > an)
@@ -1707,7 +1711,7 @@ if(arg.printSAM)
 
 		  
 		  }else{
-		readToResult(rv, result, whichPos, strlen(seq)); 
+// 		readToResult(rv, result, whichPos, strlen(seq)); 
 	    
 	        readDiff = 2;
 		getNthLine(readDiff, readsFile, &seqQ, &bytesToReadQ);
@@ -1715,6 +1719,8 @@ if(arg.printSAM)
 		    {
 		    reverseSequence(seqQ, seqQ);  
 		    }
+		    
+                  readToResult_quality_aware(rv, result, seqQ, whichPos, strlen(seq));   
 		  qualityToResult(rv, seqQ, whichPos, strlen(seq)); 
 		  
                     if(arg.printSAM)

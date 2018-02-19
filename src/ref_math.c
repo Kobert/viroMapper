@@ -1,4 +1,6 @@
 #include <math.h>
+#include <assert.h>
+
 
 #include "referenceAssembly.h" 
 #include "ref_math.h" 
@@ -38,6 +40,21 @@ double Q2P(unsigned int q)
  return pow(10.0, (double)q/(-10));
   
 }
+
+// returns the actual (error) probability from a Phred score in char/letter form.
+double cQ2P(char c)
+{
+    
+    if((int)c < 33)
+    {
+        fprintf(stderr, "Character not a valid Phread-score: '%c'\n",c);
+        assert((int)c >= 33);
+    }
+    
+ return pow(10.0, (double)((int)c-33)/(-10));
+
+}
+
 
 unsigned int P2Q(double p)
 {

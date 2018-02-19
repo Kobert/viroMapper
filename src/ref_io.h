@@ -13,6 +13,8 @@ void readToResult(resultsVector *rv, char * seq, unsigned int pos, unsigned int 
 
 void revCompReadToResult(resultsVector *rv, char * seq, unsigned int pos, unsigned int length);
 
+void readToResult_quality_aware(resultsVector *rv, char* seq, char* q, unsigned int pos, unsigned int length);
+
 void qualityToResult(resultsVector *rv, char * seq, unsigned int pos, unsigned int length);
 
 void revQualityToResult(resultsVector *rv, char * seq, unsigned int pos, unsigned int length);
@@ -21,9 +23,13 @@ void postProcessResults(setting arg, resultsVector *rv);
 
 void printCSV(FILE* file, resultsVector rv);
 
+void printCSV_quality_aware_bases(FILE *file, resultsVector rv);
+
 void printHtml(FILE *file, setting s, resultsVector rv);
 
 void printGnuplotDat(FILE* file, resultsVector rv);
+
+void printGnuplotDat_quality_aware_bases(FILE* file, resultsVector rv);
 
 void writeConsensusReferenceFile(FILE* file, resultsVector rv, char*);
 

@@ -228,6 +228,12 @@ typedef struct
   unsigned int T;
   unsigned int N;
   
+  double qA;
+  double qC;
+  double qG;
+  double qT;
+  double qN;
+  
   unsigned int coverage;
   unsigned int qFloorCoverage;
   

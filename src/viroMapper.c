@@ -122,7 +122,8 @@ sprintf(gnuplotFileName, "%s.dataPoints.dat", arg.outFilePrefix);
 
 FILE * gnuplotFile = fopen(gnuplotFileName,"w");
 
-printGnuplotDat(gnuplotFile, rv);
+// printGnuplotDat(gnuplotFile, rv);
+printGnuplotDat_quality_aware_bases(gnuplotFile, rv);
 
 fclose(gnuplotFile);
 
@@ -161,7 +162,10 @@ sprintf(csvFileName, "_temp.csv");
 }
 FILE * csvFile = fopen(csvFileName,"w");
 
-printCSV(csvFile, rv);
+// printCSV(csvFile, rv);
+printCSV_quality_aware_bases(csvFile, rv);
+
+
 fclose(csvFile);
 print_selective("\ncsv output written to:           \"%s\"\n", csvFileName);
 free(csvFileName);

@@ -207,6 +207,131 @@ void revCompReadToResult(resultsVector *rv, char * seq, unsigned int pos, unsign
       case 'N':
       case 'X':
       case '-':
+      case 'W':
+      case 'w':
+      case 'S':
+      case 's':
+      case 'M':
+      case 'm':
+      case 'K':
+      case 'k':
+      case 'R':
+      case 'r':
+      case 'Y':
+      case 'y':
+      case 'B':
+      case 'b':
+      case 'd':
+      case 'D':
+      case 'H':
+      case 'h':
+      case 'V':
+      case 'v':
+        r->coverage ++;
+	r->N++;
+	break;
+      default:
+	fprintf(stderr, "seg ='%s'",seq);
+	assert(0);//A sequence should not contain anything but DNA characters... 
+		  // TODO if this is a limiting factor, simply skip the entry but keep i small
+		  // Also, make sure the same is true for qualities...
+        break;
+      }
+  }
+  
+  
+  
+}
+
+
+void readToResult_quality_aware(resultsVector *rv, char* seq, char* q, unsigned int pos, unsigned int length)
+{
+  
+    unsigned int i;
+//     unsigned int value;
+      double match, miss;
+    
+    for(i = 0; i < length; i++)
+    {
+        
+//       if((int)q[i] < 33)
+//         {
+//         fprintf(stderr, "%s\n",q);
+//         fprintf(stderr, "q[%u]='%c'\n",i, q[i]);
+//         assert((int)q[i] >= 33);
+//         }
+//       value = (int)q[i] - 33;
+      
+      match = cQ2P(q[i]);
+      miss = 1/3*(1-match);
+      
+    result* r = &(rv->results[pos + i]);
+   
+    char c = seq[i];
+    
+
+       switch (c)
+      {
+      case 'A':
+      case 'a':
+	   r->coverage ++;
+	r->A++;
+        r->qA = r->qA + match;
+        r->qC = r->qC + miss;
+        r->qG = r->qG + miss;
+        r->qT = r->qT + miss;
+	
+	break;
+      case 'C':
+      case 'c':
+	   r->coverage ++;
+	r->C++;
+	r->qA = r->qA + miss;
+        r->qC = r->qC + match;
+        r->qG = r->qG + miss;
+        r->qT = r->qT + miss;
+	break;
+      case 'G':
+      case 'g':
+	   r->coverage ++;
+	r->G++;
+	r->qA = r->qA + miss;
+        r->qC = r->qC + miss;
+        r->qG = r->qG + match;
+        r->qT = r->qT + miss;
+	break;
+      case 'T':
+      case 't':
+	   r->coverage ++;
+	r->T++;
+	r->qA = r->qA + miss;
+        r->qC = r->qC + miss;
+        r->qG = r->qG + miss;
+        r->qT = r->qT + match;
+	break;
+      case 'N':
+      case 'X':
+      case '-':
+      case 'W':
+      case 'w':
+      case 'S':
+      case 's':
+      case 'M':
+      case 'm':
+      case 'K':
+      case 'k':
+      case 'R':
+      case 'r':
+      case 'Y':
+      case 'y':
+      case 'B':
+      case 'b':
+      case 'd':
+      case 'D':
+      case 'H':
+      case 'h':
+      case 'V':
+      case 'v':
 	   r->coverage ++;
 	r->N++;
 	break;
@@ -222,6 +347,117 @@ void revCompReadToResult(resultsVector *rv, char * seq, unsigned int pos, unsign
   
   
 }
+
+void revCompReadToResult_quality_aware(resultsVector *rv, char * seq, char* q, unsigned int pos, unsigned int length)
+{
+  
+  unsigned int i;
+//   unsigned int value;
+  double match, miss;
+  
+  for(i = 0; i < length; i++)
+  {
+  
+//       if((int)q[i] < 33)
+//         {
+//         fprintf(stderr, "%s\n",q);
+//         fprintf(stderr, "q[%u]='%c'\n",i, q[i]);
+//         assert((int)q[i] >= 33);
+//         }
+//       value = (int)q[i] - 33;
+      
+      match = cQ2P(q[i]);
+      miss = 1/3*(1-match);
+  
+   result* r = &(rv->results[pos + i]);
+   
+
+    
+    char c = seq[length -1 -i];
+       switch (c)
+      {
+      case 'T':
+      case 't':
+	   r->coverage ++;
+	r->A++;
+        r->qA = r->qA + match;
+        r->qC = r->qC + miss;
+        r->qG = r->qG + miss;
+        r->qT = r->qT + miss;
+	break;
+      case 'G':
+      case 'g':
+	   r->coverage ++;
+	r->C++;
+        
+        r->qA = r->qA + miss;
+        r->qC = r->qC + match;
+        r->qG = r->qG + miss;
+        r->qT = r->qT + miss;
+        
+	break;
+      case 'C':
+      case 'c':
+	   r->coverage ++;
+	r->G++;
+        
+        r->qA = r->qA + miss;
+        r->qC = r->qC + miss;
+        r->qG = r->qG + match;
+        r->qT = r->qT + miss;
+        
+	break;
+      case 'A':
+      case 'a':
+	   r->coverage ++;
+	r->T++;
+        
+        r->qA = r->qA + miss;
+        r->qC = r->qC + miss;
+        r->qG = r->qG + miss;
+        r->qT = r->qT + match;
+        
+	break;
+      case 'N':
+      case 'X':
+      case '-':
+      case 'W':
+      case 'w':
+      case 'S':
+      case 's':
+      case 'M':
+      case 'm':
+      case 'K':
+      case 'k':
+      case 'R':
+      case 'r':
+      case 'Y':
+      case 'y':
+      case 'B':
+      case 'b':
+      case 'd':
+      case 'D':
+      case 'H':
+      case 'h':
+      case 'V':
+      case 'v':
+        r->coverage ++;
+	r->N++;
+        r->qN = r->qN + 1.0;
+	break;
+      default:
+	fprintf(stderr, "seg ='%s'",seq);
+	assert(0);//A sequence should not contain anything but DNA characters... 
+		  // TODO if this is a limiting factor, simply skip the entry but keep i small
+		  // Also, make sure the same is true for qualities...
+        break;
+      }
+  }
+  
+  
+  
+}
+
 void qualityToResult(resultsVector *rv, char * seq, unsigned int pos, unsigned int length)
 {
   
@@ -560,6 +796,24 @@ void printCSV(FILE *file, resultsVector rv)
   
 }
 
+void printCSV_quality_aware_bases(FILE *file, resultsVector rv)
+{
+    unsigned int i;
+    result r;
+
+     fprintf(file, ",As,Cs,Gs,Ns,Ts,coverage,expected_number_of_errors,majorbase_ratio,majorbases,majorsequence,position,probability_of_seq_error,secondbase,secondbase_ratio,indels,qAs,qCs,qGs,qNs,qTs\n");
+     
+	for(i = 0; i < rv.assignedLength; i++)
+	{
+	  r = rv.results[i];
+	  
+	  
+	fprintf(file, "%u, %u, %u, %u, %u, %u, %u, %f, %f, %u, %c, %u, %f, %u, %f, %u, %f, %f, %f, %f, %f\n", 
+	       i, r.A, r.C, r.G, r.N, r.T, r.coverage, r.coverage * r.meanError, r.frequencyMajorBase, r.majorBaseCount, r.majorBase, i, r.meanError, r.secondBaseCount, r.frequencySecondBase, r.numIndels , r.qA, r.qC, r.qG, r.qN, r.qT);
+	}
+  
+  
+}
 //print as html table element
 void pd_c(FILE *file, char* color, const char *format, ...)
 {
@@ -693,6 +947,26 @@ void printGnuplotDat(FILE* file, resultsVector rv)
 	  sum = r.A + r.C + r.G + r.T;
 	 fprintf(file, "%u \t%u \t%u \t%u \t%u \t%u \t%u \t%u \t%u \t%f \t%f \t%f \t%f\n"
 	               , i, r.minPhError, r.lowerPhQuartile, r.medianPhError, r.upperPhQuartile, r.maxPhError, r.meanPhError, r.coverage, r.qFloorCoverage, r.A/(double)sum, r.C/(double)sum, r.G/(double)sum, r.T/(double)sum); 
+	  
+	}
+	fflush(file);
+}
+
+void printGnuplotDat_quality_aware_bases(FILE* file, resultsVector rv)
+{
+  unsigned int i, sum;
+  double qSum;
+  result r;
+  fprintf(file, "#pos \tmin \tQ1 \tMedian \tQ3 \tmax \tMean \tCoverage \tqCoverage \tA \tC \tG \tT \tqA \tqC \tqG \tqT\n");
+  	for(i = 0; i < rv.assignedLength; i++)
+	{
+	  r = rv.results[i];
+	  
+	  sum = r.A + r.C + r.G + r.T;
+//        sum and qSum should actually be the same without floating-point errors
+          qSum = r.qA + r.qC + r.qG + r.qT;
+	 fprintf(file, "%u \t%u \t%u \t%u \t%u \t%u \t%u \t%u \t%u \t%f \t%f \t%f \t%f \t%f \t%f \t%f \t%f\n"
+	               , i, r.minPhError, r.lowerPhQuartile, r.medianPhError, r.upperPhQuartile, r.maxPhError, r.meanPhError, r.coverage, r.qFloorCoverage, r.A/(double)sum, r.C/(double)sum, r.G/(double)sum, r.T/(double)sum, r.qA/qSum, r.qC/qSum, r.qG/qSum, r.qT/qSum); 
 	  
 	}
 	fflush(file);
