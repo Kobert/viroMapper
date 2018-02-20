@@ -43,7 +43,13 @@ void plotMajorBase(setting arg, char* tempFileName);
 
 void printAvgCoverage(setting arg, resultsVector rv);
 
-void printSamLine(int position, char* referenceName, char* name, char* seq, char* qual, int lenght,  unsigned int isComplemented, unsigned int mapping_quality, Placement* placement);
+void printSamLine(int position, int position_offset, char* referenceName, char* name, char* seq, char* qual, int lenght,  unsigned int isComplemented, unsigned int mapping_quality, Placement* placement);
 
 void printSamHeader(char* nameReference, unsigned int referenceLength);
+
+void printSamHeader_additional_reference(char* nameReference, unsigned int referenceLength);
+
+char* get_reference_name_by_position(globalVariables g, int pos);
+
+int get_reference_offset_by_position(globalVariables g, int pos);
 #endif

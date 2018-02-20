@@ -181,6 +181,8 @@ typedef struct
   unsigned int referenceSequenceLength; 
   
   char ** reference_names;
+  unsigned int * references_individual_lengths;
+  unsigned int * references_individual_start;
   int number_of_references;
   
   int * break_points; //Points where one reference ends and another begins

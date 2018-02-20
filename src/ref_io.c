@@ -1213,7 +1213,7 @@ print_selective("%.1f\n", rv.averageQFloorCoverage);
 print_selective("\n");
 }
 
-void printSamLine(int position, char* referenceName, char* name, char* seq, char* qual, int length,  unsigned int isComplemented, unsigned int mapping_quality, Placement* placement)
+void printSamLine(int position, int position_offset, char* referenceName, char* name, char* seq, char* qual, int length,  unsigned int isComplemented, unsigned int mapping_quality, Placement* placement)
 {
     
     unsigned int flag = 0;
@@ -1246,7 +1246,9 @@ void printSamLine(int position, char* referenceName, char* name, char* seq, char
     {
         if(placement)
         assert(position == placement->start_leftmost);
-        printf("%d\t", (position+1));
+        
+//      position_offset is used to translate from the placement on the concatenated sequences to the placement on the actual reference
+        printf("%d\t", (position+1-position_offset));
     }
     
     //MAPQ TODO
@@ -1287,9 +1289,55 @@ void printSamHeader(char* nameReference, unsigned int referenceLength)
     printf("@SQ\tSN:%s\tLN:%u\n", nameReference, referenceLength);
 }
 
+void printSamHeader_additional_reference(char* nameReference, unsigned int referenceLength)
+{
+    printf("@SQ\tSN:%s\tLN:%u\n", nameReference, referenceLength);
+}
+
 void writeToSam(FILE* file, int position, char*name, char* seq)
 {
     
     
     
+}
+
+
+// TODO istead of a loop for each position, a look-up table may be a cleaner solution... 
+char* get_reference_name_by_position(globalVariables g, int pos)
+{
+    if(pos<0)
+        return NULL;
+    
+    int i;
+    
+    for(i = 0; i < g.number_of_references; i++)
+        {
+            if( pos < (g.references_individual_start[i] + g.references_individual_lengths[i])  )
+            {
+            return g.reference_names[i];
+            }
+        }
+       
+    
+    return NULL;
+}
+
+// TODO istead of a loop for each position, a look-up table may be a cleaner solution... 
+int get_reference_offset_by_position(globalVariables g, int pos)
+{
+    if(pos<0)
+        return 0;
+    
+    int i;
+    
+    for(i = 0; i < g.number_of_references; i++)
+        {
+            if( pos < (g.references_individual_start[i] + g.references_individual_lengths[i])  )
+            {
+            return g.references_individual_start[i];
+            }
+        }
+       
+    
+    return 0;
 }

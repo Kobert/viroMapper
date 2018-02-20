@@ -426,6 +426,10 @@ print_selective(" Reference name:  %s\n\n", name);
 	 seqLength = getline(&seq, &bytesToRead,referenceFile);
     }
    
+//    -1 since we previously incremented this value...
+   globalVar->references_individual_lengths[globalVar->number_of_references-1] = sumLengths;
+   globalVar->references_individual_start[globalVar->number_of_references-1] = original_length;
+
    if(verbose > 1)
    printf("\nSumLengths = %u\n", sumLengths);
    
@@ -575,6 +579,10 @@ rewind(referenceFile);
    
 //    print_selective("1\n");
    
+//    -1 since we previously incremented this value...
+   globalVar->references_individual_lengths[globalVar->number_of_references-1] = sumLengths;
+   globalVar->references_individual_start[globalVar->number_of_references-1] = 0;
+   
    if(verbose > 1)
    printf("\nSumLengths = %u\n", sumLengths);
    
@@ -617,8 +625,9 @@ rewind(referenceFile);
           free(globalVar->reference_names[i]);
 
     free(globalVar->reference_names);
-
-//   print_selective("7A\n");
+    free(globalVar->references_individual_lengths);
+    free(globalVar->references_individual_start);
+      //   print_selective("7A\n");
 
 //       return;
     
@@ -701,6 +710,10 @@ void initGlobalVariables(setting *arg, globalVariables *globalVar)
 //  globalVar->reference_names = (char**)calloc(globalVar->number_of_references, sizeof(char*));
  globalVar->reference_names = (char**)calloc(arg->num_multi_references, sizeof(char*));
  
+ globalVar->references_individual_lengths = (unsigned int*)calloc(arg->num_multi_references, sizeof(unsigned int));
+ globalVar->references_individual_start = (unsigned int*)calloc(arg->num_multi_references, sizeof(unsigned int));
+ 
+
  globalVar->break_points = (int*)calloc(arg->num_multi_references + 1, sizeof(int));//+1 because we have an initial 0
  globalVar->break_points[0] = 0; //This is redundant and only placed here for explicity
  

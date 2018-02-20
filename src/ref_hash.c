@@ -1496,7 +1496,14 @@ void cleanHashMapReadsWithKey(setting arg, globalVariables *globalVar, resultsVe
 //   samFile = fopen("_temp_placeholder_sam.sam","w");
 if(arg.printSAM)
 {
-  printSamHeader("Reference_Name", globalVar->referenceSequenceLength);
+    
+  printSamHeader(globalVar->reference_names[0], globalVar->references_individual_lengths[0]);
+    
+  for(int i = 1; i < globalVar->number_of_references; i++)  
+  {
+      printSamHeader_additional_reference(globalVar->reference_names[i], globalVar->references_individual_lengths[i] );  
+  }
+  
 }
 
 
@@ -1697,7 +1704,7 @@ if(arg.printSAM)
                   {
                         if(arg.printSAM)
                         {
-                        printSamLine( (whichPos+an), "Reference_Name", &seq_name[1], &(result[an]), &(seqQ[an]), (bn -an),  matchReverse, mappingQuality, NULL); 
+                        printSamLine( (whichPos+an), get_reference_offset_by_position(*globalVar, (whichPos+an)), get_reference_name_by_position(*globalVar, (whichPos+an)), &seq_name[1], &(result[an]), &(seqQ[an]), (bn -an),  matchReverse, mappingQuality, NULL); 
                         }
                   }
 //                   sumDifferentQs(&(globalVar->referenceSequence[whichPos]), result, seqQ,  strlen(seq));
@@ -1725,7 +1732,7 @@ if(arg.printSAM)
 		  
                     if(arg.printSAM)
                     {
-                    printSamLine( whichPos, "Reference_Name", &seq_name[1], result, seqQ, strlen(result),  matchReverse, mappingQuality, NULL); 
+                    printSamLine( whichPos, get_reference_offset_by_position(*globalVar, whichPos),  get_reference_name_by_position(*globalVar, whichPos), &seq_name[1], result, seqQ, strlen(result),  matchReverse, mappingQuality, NULL); 
                     }
                     
 		    if( arg.storeReads )
@@ -1743,7 +1750,7 @@ if(arg.printSAM)
             getNthLine(readDiff, readsFile, &seqQ, &bytesToReadQ);
                 if(arg.printSAM)
                 {
-                printSamLine( -1, "Reference_Name", &seq_name[1], seq, seqQ, strlen(seq),  0, mappingQuality, NULL);
+                printSamLine( -1, 0, "Unmapped", &seq_name[1], seq, seqQ, strlen(seq),  0, mappingQuality, NULL);
                 }
 
 	    
