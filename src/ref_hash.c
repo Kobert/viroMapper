@@ -1170,7 +1170,13 @@ int placeFragments(setting s, globalVariables* g, resultsVector* rv, hashEntry *
    
    
   length = strlen(seq) - firstPosition;// Right now no -1 since strings are trimmed beforehand!
+  
+  if(length <= 0)
+  {
+  fprintf(stderr, "[ERROR:] length of fragment %u (seq: \"%s\", firstPosition: %u)\n", length, seq, firstPosition);
   assert(length > 0);
+  }
+  
   
   
   fragments  = floor( (double)length/(double)basesPerWindow() );
@@ -1609,14 +1615,28 @@ if(arg.printSAM)
 
 	  // Now, test whether shifting it such that the fragments are right aligned gives a valid matching.
 	  // If it was already right aligned during the first iteration, use a centered method instead.
-	  if(!match  && arg.doExtendedTesting)
+	  if( !arg.doExtendedTesting || (match || strlen(seq) <= basesPerWindow()) )
+            {
+            shift = 0;    
+            }else{
+	    shift = strlen(seq) % basesPerWindow();
+            }
+            
+// 	  if(!match  && arg.doExtendedTesting)
+          if(shift > 0)
 	  {
 
-	    shift = strlen(seq) % basesPerWindow();
-	    if(shift == 0)
-	    {
+//             if(strlen(seq) <= basesPerWindow())
+//             {
+//             shift = 0;    
+//             }else{
+// 	    shift = strlen(seq) % basesPerWindow();
+//             }
+            
+//             if(shift == 0)
+// 	    {
 	    //  shift = floor(basesPerWindow()/2.0);
-	    }
+// 	    }
 	    
 	   whichPos = placeFragments(arg, globalVar, rv, globalVar->hashTable, globalVar->entryTable, seq, shift, &hit, &miss, &hitPerRound, &max_fragments);
 	   whichPos = whichPos - shift;
@@ -1630,7 +1650,8 @@ if(arg.printSAM)
 	  }	
 
 	  // Lastly, do the shifting for the reverse complemented sequence
-	  if(!match && arg.doExtendedTesting)
+// 	  if(!match && arg.doExtendedTesting)
+          if(!match && shift > 0)
 	  {
 
 	    
