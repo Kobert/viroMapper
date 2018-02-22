@@ -75,6 +75,9 @@ int found_non_space = 0;
 }
 
 //return of this function must be freed!
+// This function simply chacks the string from the right and
+// stops as soon as the first "/" is encountered.
+// Everything left of this is assumed to be the file path.
 char* remove_path_by_strdup(char* c)
 {
     
@@ -90,7 +93,7 @@ char* result;
         }
     }
 
-    assert(i<strlen(c) && "String seems to and in /, or other problem present.");
+    assert(i<strlen(c) && "String seems to end wuth \"/\" (or other problem present).");
 result = strdup(&c[i]);
     
 return result;
@@ -262,7 +265,7 @@ void readToResult_quality_aware(resultsVector *rv, char* seq, char* q, unsigned 
 //         }
 //       value = (int)q[i] - 33;
       
-      match = cQ2P(q[i]);
+      match = 1-cQ2P(q[i]);
       miss = 1/3*(1-match);
       
     result* r = &(rv->results[pos + i]);
@@ -366,7 +369,7 @@ void revCompReadToResult_quality_aware(resultsVector *rv, char * seq, char* q, u
 //         }
 //       value = (int)q[i] - 33;
       
-      match = cQ2P(q[i]);
+      match = (1-cQ2P(q[i]));
       miss = 1/3*(1-match);
   
    result* r = &(rv->results[pos + i]);
@@ -944,6 +947,12 @@ void print_interactive_html_file_js(FILE *file, setting s, resultsVector rv)
      
      length = rv.assignedLength;
      
+     if(s.outFilePrefix)
+        {
+        char* temp = remove_path_by_strdup(s.outFilePrefix);
+        fprintf(file, "var analysis_name = \"%s\";\n", temp);
+        free(temp);
+        }
      
       fprintf(file, "var max_line = %u;\n", length);
 //      -------------------------------
