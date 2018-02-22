@@ -266,7 +266,7 @@ void readToResult_quality_aware(resultsVector *rv, char* seq, char* q, unsigned 
 //       value = (int)q[i] - 33;
       
       match = 1-cQ2P(q[i]);
-      miss = 1/3*(1-match);
+      miss = 1/3.0*(1-match);
       
     result* r = &(rv->results[pos + i]);
    
@@ -370,7 +370,8 @@ void revCompReadToResult_quality_aware(resultsVector *rv, char * seq, char* q, u
 //       value = (int)q[i] - 33;
       
       match = (1-cQ2P(q[i]));
-      miss = 1/3*(1-match);
+      miss = 1/3.0*(1-match);
+      
   
    result* r = &(rv->results[pos + i]);
    
