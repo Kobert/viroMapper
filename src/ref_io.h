@@ -27,6 +27,8 @@ void printCSV_quality_aware_bases(FILE *file, resultsVector rv);
 
 void printHtml(FILE *file, setting s, resultsVector rv);
 
+void print_interactive_html_file_js(FILE *file, setting s, resultsVector rv);
+
 void printGnuplotDat(FILE* file, resultsVector rv);
 
 void printGnuplotDat_quality_aware_bases(FILE* file, resultsVector rv);

@@ -72,6 +72,7 @@ unsigned int printSAM;
 
 unsigned int doCsvFile;
 unsigned int doGnuplotFile;
+unsigned int doJSFile;
 unsigned int concealResults;
 
 unsigned int executeReferenceOnly;

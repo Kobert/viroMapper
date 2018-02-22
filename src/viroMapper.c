@@ -173,22 +173,30 @@ free(csvFileName);
 
 
 
+if(arg.doJSFile)
+{
+
 char *htmlFileName;
     if(arg.outFilePrefix)
     {
     htmlFileName = (char*)calloc(strlen(arg.outFilePrefix)+6, sizeof(char));
-    sprintf(htmlFileName, "%s.html", arg.outFilePrefix);
+    sprintf(htmlFileName, "%s.js", arg.outFilePrefix);
+//         sprintf(htmlFileName, "%s.html", arg.outFilePrefix);
     }else{
     htmlFileName = (char*)calloc(11, sizeof(char));
-    sprintf(htmlFileName, "_temp.html");
+    sprintf(htmlFileName, "_temp.js");
+//     sprintf(htmlFileName, "_temp.html");
     }
 FILE * htmlFile = fopen(htmlFileName,"w");
 
-printHtml(htmlFile, arg, rv);
+// printHtml(htmlFile, arg, rv);
+print_interactive_html_file_js(htmlFile, arg, rv);
 fclose(htmlFile);
 print_selective("\nHtml output written to:           \"%s\"\n", htmlFileName);
 free(htmlFileName);
 
+    
+}
 
 
 

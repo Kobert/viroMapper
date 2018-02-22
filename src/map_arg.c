@@ -17,7 +17,7 @@
  void map_help()
  {
   printf("\n"); 
-  printf("This is viroMapper v. 0.0.5\n\n"); 
+  printf("This is viroMapper v. 0.0.6\n\n"); 
   printf("Function arguments are:\n"); 
   printf("\n"); 
   printf(" -r <string>       for specifying a file containing the reference sequence (fasta format only)\n");    
@@ -28,19 +28,22 @@
   printf(" -o <Path/string>  specify a prefix for the output names (can include a path).\n");  
   printf("                   If no Prefix is provided, only generic temporary files will be written.\n");
   printf("\n");    
-  printf(" -a                Print alignment information in SAM format to stdout.\n");
-  printf(" -c                Print results in form of a *.csv file.\n");
+  printf("                   Output formats:\n");    
+  
+  printf(" -C                Write fasta file containing the consensus sequence.\n");   
   printf("                   A path should be provided with -o for this option.\n");    
-  printf(" -g                Plot results in Gnuplot.\n");
+  printf(" -G                Plot results in Gnuplot.\n");
   printf("                   A path can be provided with -o for this option.\n");
   printf("                   If no path is provided, no *.png files will be written.\n");  
-  printf(" -x                Only test reference sequence for suitability and exit.\n");   
+  printf(" -S                Print alignment information in SAM format to stdout.\n");
+  printf(" -T                Only test reference sequence for suitability and exit.\n");   
   printf("                   (No fastq file is needed with this otion.)\n");   
-  printf(" -y                Write fasta file containing the consensus sequence.\n");   
+  printf(" -V                Print results in form of a *.csv file.\n");
   printf("                   A path should be provided with -o for this option.\n");    
   printf("\n");  
   printf("\n");    
-  printf(" -t                Trim any suffix and prefix that does not contain 8 consecutive matches.\n");    
+  printf(" -t                Trim any suffix and prefix that does not contain 8 consecutive matches.\n"); 
+  printf("                   (This option is suggested for most analyses.)\n");
   printf("\n");    
   printf(" -h                Print this help messgae\n");    
   printf("\n\n");
@@ -87,6 +90,7 @@
   
   s.doCsvFile = 0;
   s.doGnuplotFile = 0;
+  s.doJSFile = 0;
   s.writeConsensus = 0;
   
   s.numPlots = 40;
@@ -104,7 +108,7 @@
   s.qFloor = -1;
 
 
-  while ((c = getopt (argc, argv, "acdef:ghmr:s:tpw:o:q:xyz")) != -1)
+  while ((c = getopt (argc, argv, "acCdef:gGhjJmr:s:StTpVw:o:O:q:xyz")) != -1)
   {          
     switch (c)
       {
@@ -113,11 +117,23 @@
 	exit(1);
 	break;
       case 'a':
+          print_selective("\n[NOTE:] You are using the discontinued -%c option name. \n", c);
+          print_selective("        To get rid of this warning, please use -%c for the same result\n\n", 'S');          
+      case 'S':
         s.printSAM = 1;  
         break;
       case 'c':
+          print_selective("\n[NOTE:] You are using the discontinued -%c option name. \n", c);
+          print_selective("        To get rid of this warning, please use -%c for the same result\n\n", 'V');        
+      case 'V':
 	s.doCsvFile = 1;
 	break;	
+      case 'y':
+          print_selective("\n[NOTE:] You are using the discontinued -%c option name. \n", c);
+          print_selective("        To get rid of this warning, please use -%c for the same result\n\n", 'C');        
+      case 'C':
+          s.writeConsensus = 1;
+        break;
       case 'e':
 	s.doExtendedTesting = 1;
 	break;		
@@ -126,8 +142,17 @@
 	s.minFracs = atoi(optarg);
 	break;		
       case 'g':
+        print_selective("\n[NOTE:] You are using the discontinued -%c option name. \n", c);
+        print_selective("        To get rid of this warning, please use -%c for the same result\n\n", 'G');        
+      case 'G':
 	s.doGnuplotFile = 1;
 	break;
+      case 'j':
+        print_selective("\n[NOTE:] You are using the discontinued -%c option name. \n", c);
+        print_selective("        To get rid of this warning, please use -%c for the same result\n\n", 'J');          
+      case 'J':
+        s.doJSFile = 1;
+        break;
       case 'm':
 	s.mapOnly = 1;
 	s.storeReads = 0;
@@ -172,6 +197,12 @@
       case 's':
         s.readsFile = strdup(optarg);
         break;
+      case 'x':
+          print_selective("\n[NOTE:] You are using the discontinued -%c option name. \n", c);
+          print_selective("        To get rid of this warning, please use -%c for the same result\n\n", 'T');                  
+      case 'T':
+        s.executeReferenceOnly = 1;
+        break;
       case 't':
         s.doTrim = 1;
         break;
@@ -185,12 +216,6 @@
         s.windows = atoi(optarg);
 	fprintf(stderr, "[ERROR:] Feature '-w' not live yet! Aborting analysis.");
 	assert(0);
-        break;
-      case 'x':
-        s.executeReferenceOnly = 1;
-        break;
-      case 'y':
-        s.writeConsensus = 1;
         break;
       case '?':
         if (optopt == 's' || optopt == 'r' || optopt == 'w' )
@@ -267,13 +292,19 @@
    print_selective("           A generict temporary file will be written.\n");
   }
   
+  if(s.doJSFile && !s.outFilePrefix)
+  {
+   print_selective("\n[Warning:] JS output is set without specifying an output path (via -o).\n ");   
+   print_selective("           A generict temporary file will be written.\n");
+  }
+  
       if(s.writeConsensus && !s.outFilePrefix)
   {
    print_selective("\n[Warning:] fasta consensus output is requested without specifying an output path (via -o).\n ");   
    print_selective("           A generict temporary file will be written.\n");
   }
   
-    if(!s.doGnuplotFile && !s.doCsvFile && !s.executeReferenceOnly && !s.writeConsensus && !s.printSAM)//TODO add any new output formats here
+    if(!s.doGnuplotFile && !s.doCsvFile && !s.executeReferenceOnly && !s.writeConsensus && !s.printSAM && !s.doJSFile)//TODO add any new output formats here
   {
    print_selective("\n[Note:] No output format specified.\n ");   
    print_selective("        Only basic statistics will be printed to the screen.\n ");
