@@ -668,14 +668,50 @@ void postProcessResults(setting arg, resultsVector *rv)
          secondBase = 'N';    
          }
 	 
+	 
+	 
 	 r->majorBase = majorBase;
          r->secondBase_char = secondBase;
 	 r->majorBaseCount = max;
 	 r->secondBaseCount = second;
 	 
-	 r->frequencyMajorBase  = (double)max/r->coverage;
-	 r->frequencySecondBase = (double)second/r->coverage;
+// 	 r->frequencyMajorBase  = (double)max/r->coverage;
+// 	 r->frequencySecondBase = (double)second/r->coverage;
+	 r->frequencyMajorBase  = (double)max/(r->A + r->C + r->G + r->T);
+	 r->frequencySecondBase = (double)second/(r->A + r->C + r->G + r->T);
 	 
+//          if(majorBase == 'N'){
+          r->frequencyMajorBase_quality_corrected = 0.0;
+          r->frequencySecondBase_quality_corrected = 0.0;          
+//          }
+         
+        if(majorBase == 'A'){
+          r->frequencyMajorBase_quality_corrected = r->qA/(double)(r->qA + r->qC + r->qG + r->qT);
+        }
+        if(majorBase == 'C'){
+          r->frequencyMajorBase_quality_corrected = r->qC/(double)(r->qA + r->qC + r->qG + r->qT);
+        }
+        if(majorBase == 'G'){
+          r->frequencyMajorBase_quality_corrected = r->qG/(double)(r->qA + r->qC + r->qG + r->qT);
+        }
+        if(majorBase == 'T'){
+          r->frequencyMajorBase_quality_corrected = r->qT/(double)(r->qA + r->qC + r->qG + r->qT);
+        }
+        
+        
+        if(secondBase == 'A'){
+          r->frequencySecondBase_quality_corrected = r->qA/(double)(r->qA + r->qC + r->qG + r->qT);
+        }
+        if(secondBase == 'C'){
+          r->frequencySecondBase_quality_corrected = r->qC/(double)(r->qA + r->qC + r->qG + r->qT);
+        }
+        if(secondBase == 'G'){
+          r->frequencySecondBase_quality_corrected = r->qG/(double)(r->qA + r->qC + r->qG + r->qT);
+        }
+        if(secondBase == 'T'){
+          r->frequencySecondBase_quality_corrected = r->qT/(double)(r->qA + r->qC + r->qG + r->qT);
+        }
+         
 // Find Quality scores
 	 min  = -1;
 	 max  = -1;
@@ -864,15 +900,15 @@ void printCSV_quality_aware_bases(FILE *file, resultsVector rv)
     unsigned int i;
     result r;
 
-     fprintf(file, "position, As, Cs, Gs, Ns, Ts, coverage, expected_number_of_errors, majorbase_ratio, majorbases, majorsequence, probability_of_seq_error, secondbase, secondbase_ratio, indels, qAs, qCs, qGs, qNs, qTs\n");
+     fprintf(file, "position, As, Cs, Gs, Ns, Ts, coverage, expected_number_of_errors, majorbase_ratio, majorbase_ratio_quality_corrected, majorbases, majorsequence, probability_of_seq_error, secondbase, secondbase_ratio, secondbase_ratio_quality_corrected, secondbase_sequence, indels, qAs, qCs, qGs, qNs, qTs\n");
      
 	for(i = 0; i < rv.assignedLength; i++)
 	{
 	  r = rv.results[i];
 	  
 	  
-	fprintf(file, "%u, %u, %u, %u, %u, %u, %u, %f, %f, %u, %c, %f, %u, %f, %c, %u, %f, %f, %f, %f, %f\n", 
-	       i, r.A, r.C, r.G, r.N, r.T, r.coverage, r.coverage * r.meanError, r.frequencyMajorBase, r.majorBaseCount, r.majorBase, r.meanError, r.secondBaseCount, r.frequencySecondBase, r.secondBase_char, r.numIndels , r.qA, r.qC, r.qG, r.qN, r.qT);
+	fprintf(file, "%u, %u, %u, %u, %u, %u, %u, %f, %f, %f, %u, %c, %f, %u, %f, %f, %c, %u, %f, %f, %f, %f, %f\n", 
+	       i, r.A, r.C, r.G, r.N, r.T, r.coverage, r.coverage * r.meanError, r.frequencyMajorBase, r.frequencyMajorBase_quality_corrected, r.majorBaseCount, r.majorBase, r.meanError, r.secondBaseCount, r.frequencySecondBase, r.frequencySecondBase_quality_corrected, r.secondBase_char, r.numIndels , r.qA, r.qC, r.qG, r.qN, r.qT);
 	}
   
   
