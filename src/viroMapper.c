@@ -22,8 +22,6 @@
 int main(int argc, char **argv)
 {
   
-//  fprintf(stderr,"FIX chainHash!!!\n");
-//    exit(0);
   
  setting arg = map_initArgs(argc, argv);
  

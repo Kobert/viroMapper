@@ -245,6 +245,7 @@ typedef struct
   unsigned int indivErrorLength;
   
   char majorBase;
+  char secondBase_char;
   unsigned int majorBaseCount;
   unsigned int secondBaseCount;
   double frequencyMajorBase;

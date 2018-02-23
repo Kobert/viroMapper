@@ -548,6 +548,7 @@ void postProcessResults(setting arg, resultsVector *rv)
   int min = -1;
   unsigned int second;
   char majorBase;
+  char secondBase;
   result *r;
   unsigned int *e;
   
@@ -572,8 +573,10 @@ void postProcessResults(setting arg, resultsVector *rv)
 	 second = max;
 	 max = r->C;
 	 majorBase = 'C';
+	 secondBase = 'A';
 	 }else{
 	  second = r->C; 
+	 secondBase = 'C';
 	 }
 	 
 	 
@@ -582,10 +585,14 @@ void postProcessResults(setting arg, resultsVector *rv)
 	 {
 	 second = max;
 	 max = r->G;
+         secondBase = majorBase;
 	 majorBase = 'G';
 	 }else{
 	   if(r->G > second)
+           {
 	  second = r->G; 
+          secondBase = 'G';
+           }
 	 }
 	   
 	  
@@ -593,25 +600,44 @@ void postProcessResults(setting arg, resultsVector *rv)
 	 if(max < r->T) 
 	 {
 	 second = max;
+         secondBase = majorBase;
 	 max = r->T;
 	 majorBase = 'T';
 	 }else{
 	   if(r->T > second)
-	  second = r->T; 
+           {
+	  second = r->T;
+         secondBase = 'T';
+           }
 	 }	  
 	  
 	//N
-	 if(max < r->N) 
-	 {
-	 second = max;
-	 max = r->N;
-	 majorBase = 'N';
-	 }else{
-	   if(r->N > second)
-	  second = r->N; 
-	 }
+// 	 if(max < r->N) 
+// 	 {
+// 	 second = max;
+//          secondBase = majorBase;
+// 	 max = r->N;
+// 	 majorBase = 'N';
+// 	 }else{
+// 	   if(r->N > second)
+//            {
+// 	  second = r->N; 
+//          secondBase = 'N';
+//            }
+// 	 }
+	 
+	 if(max == 0)
+         {
+         secondBase = 'N';
+         majorBase = 'N';    
+         }
+         if(second == 0)
+         {
+         secondBase = 'N';    
+         }
 	 
 	 r->majorBase = majorBase;
+         r->secondBase_char = secondBase;
 	 r->majorBaseCount = max;
 	 r->secondBaseCount = second;
 	 
@@ -780,7 +806,7 @@ void postProcessResults(setting arg, resultsVector *rv)
     rv->averageQFloorCoverage = sumQFloorPerSiteCoverage/(double)rv->assignedLength;
 }
 
-
+// NOTE Old and unused?
 void printCSV(FILE *file, resultsVector rv)
 {
     unsigned int i;
@@ -793,8 +819,8 @@ void printCSV(FILE *file, resultsVector rv)
 	  r = rv.results[i];
 	  
 	  
-	fprintf(file, "%u, %u, %u, %u, %u, %u, %u, %f, %f, %u, %c, %u, %f, %u, %f, %u\n", 
-	       i, r.A, r.C, r.G, r.N, r.T, r.coverage, r.coverage * r.meanError, r.frequencyMajorBase, r.majorBaseCount, r.majorBase, i, r.meanError, r.secondBaseCount, r.frequencySecondBase, r.numIndels );
+	fprintf(file, "%u, %u, %u, %u, %u, %u, %u, %f, %f, %u, %c, %u, %f, %u, %f, %c, %u\n", 
+	       i, r.A, r.C, r.G, r.N, r.T, r.coverage, r.coverage * r.meanError, r.frequencyMajorBase, r.majorBaseCount, r.majorBase, i, r.meanError, r.secondBaseCount, r.frequencySecondBase, r.secondBase_char, r.numIndels );
 	}
   
   
@@ -812,8 +838,8 @@ void printCSV_quality_aware_bases(FILE *file, resultsVector rv)
 	  r = rv.results[i];
 	  
 	  
-	fprintf(file, "%u, %u, %u, %u, %u, %u, %u, %f, %f, %u, %c, %u, %f, %u, %f, %u, %f, %f, %f, %f, %f\n", 
-	       i, r.A, r.C, r.G, r.N, r.T, r.coverage, r.coverage * r.meanError, r.frequencyMajorBase, r.majorBaseCount, r.majorBase, i, r.meanError, r.secondBaseCount, r.frequencySecondBase, r.numIndels , r.qA, r.qC, r.qG, r.qN, r.qT);
+	fprintf(file, "%u, %u, %u, %u, %u, %u, %u, %f, %f, %u, %c, %u, %f, %u, %f, %c, %u, %f, %f, %f, %f, %f\n", 
+	       i, r.A, r.C, r.G, r.N, r.T, r.coverage, r.coverage * r.meanError, r.frequencyMajorBase, r.majorBaseCount, r.majorBase, i, r.meanError, r.secondBaseCount, r.frequencySecondBase, r.secondBase_char, r.numIndels , r.qA, r.qC, r.qG, r.qN, r.qT);
 	}
   
   
@@ -1130,6 +1156,30 @@ void print_interactive_html_file_js(FILE *file, setting s, resultsVector rv)
           
 
         fprintf(file, "\"%c\"", r.majorBase);
+        
+        
+            if(i+1 < length)
+            {
+            fprintf(file, ", ");   
+                if( ((i+1) % 100) == 0)
+                {
+                fprintf(file, "\n");   
+                }
+            }
+        }
+     fprintf(file, "];\n");   
+     
+     
+          
+     
+               //     --------------------------------------
+          fprintf(file, "var secondsequence = [");  
+     for(i = 0; i < length; i++)
+	{            
+        r = rv.results[i];
+          
+
+        fprintf(file, "\"%c\"", r.secondBase_char);
         
         
             if(i+1 < length)

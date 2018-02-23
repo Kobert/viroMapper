@@ -33,7 +33,7 @@ long unsigned binom(unsigned int n,unsigned int k)
     return result;
 }
 
-
+// returns the ERROR probability from integer represented Phred-score
 double Q2P(unsigned int q)
 {
   
