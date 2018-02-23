@@ -844,15 +844,16 @@ void printCSV(FILE *file, resultsVector rv)
     unsigned int i;
     result r;
 
-     fprintf(file, ",As,Cs,Gs,Ns,Ts,coverage,expected_number_of_errors,majorbase_ratio,majorbases,majorsequence,position,probability_of_seq_error,secondbase,secondbase_ratio, indels\n");
+//      fprintf(file, ", As, Cs, Gs, Ns, Ts, coverage, expected_number_of_errors, majorbase_ratio, majorbases, majorsequence, position, probability_of_seq_error, secondbase, secondbase_ratio, indels\n");
+     fprintf(file, "position, As, Cs, Gs, Ns, Ts, coverage, expected_number_of_errors, majorbase_ratio, majorbases, majorsequence, probability_of_seq_error, secondbase, secondbase_ratio, indels\n");
      
 	for(i = 0; i < rv.assignedLength; i++)
 	{
 	  r = rv.results[i];
 	  
 	  
-	fprintf(file, "%u, %u, %u, %u, %u, %u, %u, %f, %f, %u, %c, %u, %f, %u, %f, %c, %u\n", 
-	       i, r.A, r.C, r.G, r.N, r.T, r.coverage, r.coverage * r.meanError, r.frequencyMajorBase, r.majorBaseCount, r.majorBase, i, r.meanError, r.secondBaseCount, r.frequencySecondBase, r.secondBase_char, r.numIndels );
+	fprintf(file, "%u, %u, %u, %u, %u, %u, %u, %f, %f, %u, %c, %f, %u, %f, %c, %u\n", 
+	       i, r.A, r.C, r.G, r.N, r.T, r.coverage, r.coverage * r.meanError, r.frequencyMajorBase, r.majorBaseCount, r.majorBase, r.meanError, r.secondBaseCount, r.frequencySecondBase, r.secondBase_char, r.numIndels );
 	}
   
   
@@ -863,19 +864,21 @@ void printCSV_quality_aware_bases(FILE *file, resultsVector rv)
     unsigned int i;
     result r;
 
-     fprintf(file, ",As,Cs,Gs,Ns,Ts,coverage,expected_number_of_errors,majorbase_ratio,majorbases,majorsequence,position,probability_of_seq_error,secondbase,secondbase_ratio,indels,qAs,qCs,qGs,qNs,qTs\n");
+     fprintf(file, "position, As, Cs, Gs, Ns, Ts, coverage, expected_number_of_errors, majorbase_ratio, majorbases, majorsequence, probability_of_seq_error, secondbase, secondbase_ratio, indels, qAs, qCs, qGs, qNs, qTs\n");
      
 	for(i = 0; i < rv.assignedLength; i++)
 	{
 	  r = rv.results[i];
 	  
 	  
-	fprintf(file, "%u, %u, %u, %u, %u, %u, %u, %f, %f, %u, %c, %u, %f, %u, %f, %c, %u, %f, %f, %f, %f, %f\n", 
-	       i, r.A, r.C, r.G, r.N, r.T, r.coverage, r.coverage * r.meanError, r.frequencyMajorBase, r.majorBaseCount, r.majorBase, i, r.meanError, r.secondBaseCount, r.frequencySecondBase, r.secondBase_char, r.numIndels , r.qA, r.qC, r.qG, r.qN, r.qT);
+	fprintf(file, "%u, %u, %u, %u, %u, %u, %u, %f, %f, %u, %c, %f, %u, %f, %c, %u, %f, %f, %f, %f, %f\n", 
+	       i, r.A, r.C, r.G, r.N, r.T, r.coverage, r.coverage * r.meanError, r.frequencyMajorBase, r.majorBaseCount, r.majorBase, r.meanError, r.secondBaseCount, r.frequencySecondBase, r.secondBase_char, r.numIndels , r.qA, r.qC, r.qG, r.qN, r.qT);
 	}
   
   
 }
+
+
 //print as html table element
 void pd_c(FILE *file, char* color, const char *format, ...)
 {
