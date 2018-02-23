@@ -265,8 +265,22 @@ void readToResult_quality_aware(resultsVector *rv, char* seq, char* q, unsigned 
 //         }
 //       value = (int)q[i] - 33;
       
-      match = 1-cQ2P(q[i]);
-      miss = 1/3.0*(1-match);
+ //    If coverage is distributed over all competing sites
+//    match = (1-cQ2P(q[i]));
+//    miss = 1/3.0*(1-match);
+      
+//    If coverage is distributed over called base and N   
+      match = (1-cQ2P(q[i]));
+//    This is done to retain mathematical equivalence between both mothods.
+//       I.e. if the portion assigned to N is redistributed to all 4 bases equally, both methods are the same.
+      match = match - 1/3.0*(1-match);
+      if(match < 0.0){
+       match = 0.0;   
+      }
+      miss = (1-match);
+      
+      
+      
       
     result* r = &(rv->results[pos + i]);
    
@@ -280,37 +294,40 @@ void readToResult_quality_aware(resultsVector *rv, char* seq, char* q, unsigned 
 	   r->coverage ++;
 	r->A++;
         r->qA = r->qA + match;
-        r->qC = r->qC + miss;
-        r->qG = r->qG + miss;
-        r->qT = r->qT + miss;
-	
+//         r->qC = r->qC + miss;
+//         r->qG = r->qG + miss;
+//         r->qT = r->qT + miss;
+	r->qN = r->qN + miss;
 	break;
       case 'C':
       case 'c':
 	   r->coverage ++;
 	r->C++;
-	r->qA = r->qA + miss;
+// 	r->qA = r->qA + miss;
         r->qC = r->qC + match;
-        r->qG = r->qG + miss;
-        r->qT = r->qT + miss;
+//         r->qG = r->qG + miss;
+//         r->qT = r->qT + miss;
+	r->qN = r->qN + miss;
 	break;
       case 'G':
       case 'g':
 	   r->coverage ++;
 	r->G++;
-	r->qA = r->qA + miss;
-        r->qC = r->qC + miss;
+// 	r->qA = r->qA + miss;
+//         r->qC = r->qC + miss;
         r->qG = r->qG + match;
-        r->qT = r->qT + miss;
+//         r->qT = r->qT + miss;
+	r->qN = r->qN + miss;
 	break;
       case 'T':
       case 't':
 	   r->coverage ++;
 	r->T++;
-	r->qA = r->qA + miss;
-        r->qC = r->qC + miss;
-        r->qG = r->qG + miss;
+// 	r->qA = r->qA + miss;
+//         r->qC = r->qC + miss;
+//         r->qG = r->qG + miss;
         r->qT = r->qT + match;
+	r->qN = r->qN + miss;
 	break;
       case 'N':
       case 'X':
@@ -337,6 +354,7 @@ void readToResult_quality_aware(resultsVector *rv, char* seq, char* q, unsigned 
       case 'v':
 	   r->coverage ++;
 	r->N++;
+        r->qN = r->qN + 1.0;
 	break;
       default:
 	fprintf(stderr, "seg ='%s'",seq);
@@ -369,8 +387,21 @@ void revCompReadToResult_quality_aware(resultsVector *rv, char * seq, char* q, u
 //         }
 //       value = (int)q[i] - 33;
       
+      
+//    If coverage is distributed over all competing sites
+//    match = (1-cQ2P(q[i]));
+//    miss = 1/3.0*(1-match);
+      
+//    If coverage is distributed over called base and N   
       match = (1-cQ2P(q[i]));
-      miss = 1/3.0*(1-match);
+//    This is done to retain mathematical equivalence between both mothods.
+//       I.e. if the portion assigned to N is redistributed to all 4 bases equally, both methods are the same.
+      match = match - 1/3.0*(1-match);
+      if(match < 0.0){
+       match = 0.0;   
+      }
+      miss = (1-match);
+      
       
   
    result* r = &(rv->results[pos + i]);
@@ -385,42 +416,43 @@ void revCompReadToResult_quality_aware(resultsVector *rv, char * seq, char* q, u
 	   r->coverage ++;
 	r->A++;
         r->qA = r->qA + match;
-        r->qC = r->qC + miss;
-        r->qG = r->qG + miss;
-        r->qT = r->qT + miss;
+        r->qN = r->qN + miss;
+//         r->qC = r->qC + miss;
+//         r->qG = r->qG + miss;
+//         r->qT = r->qT + miss;
 	break;
       case 'G':
       case 'g':
 	   r->coverage ++;
 	r->C++;
         
-        r->qA = r->qA + miss;
+//         r->qA = r->qA + miss;
         r->qC = r->qC + match;
-        r->qG = r->qG + miss;
-        r->qT = r->qT + miss;
-        
-	break;
+//         r->qG = r->qG + miss;
+//         r->qT = r->qT + miss;
+        r->qN = r->qN + miss;
+        break;
       case 'C':
       case 'c':
 	   r->coverage ++;
 	r->G++;
         
-        r->qA = r->qA + miss;
-        r->qC = r->qC + miss;
+//         r->qA = r->qA + miss;
+//         r->qC = r->qC + miss;
         r->qG = r->qG + match;
-        r->qT = r->qT + miss;
-        
+//         r->qT = r->qT + miss;
+        r->qN = r->qN + miss;
 	break;
       case 'A':
       case 'a':
 	   r->coverage ++;
 	r->T++;
         
-        r->qA = r->qA + miss;
-        r->qC = r->qC + miss;
-        r->qG = r->qG + miss;
+//         r->qA = r->qA + miss;
+//         r->qC = r->qC + miss;
+//         r->qG = r->qG + miss;
         r->qT = r->qT + match;
-        
+        r->qN = r->qN + miss;        
 	break;
       case 'N':
       case 'X':
