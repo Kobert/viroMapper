@@ -51,6 +51,7 @@
   printf(" -d        for more verbose debug output\n"); 
   printf(" -f <INT>  Specify how many fractions must match at least. (default 4, must be 2 or larger)\n");  
   printf(" -e        For extended testing (also consider right aligned sequences).\n");  
+  printf(" -L        Old output format for csv header\n");
   printf("\n");
  }
  
@@ -106,9 +107,12 @@
   opterr = 0;
   
   s.qFloor = -1;
+  
+//   Variable that denotes the usage of old/discontinued parameters/output formats/layouts
+  s.LEGACY = 0;
 
 
-  while ((c = getopt (argc, argv, "acCdef:gGhjJmr:s:StTpVw:o:O:q:xyz")) != -1)
+  while ((c = getopt (argc, argv, "acCdef:gGhjJLmr:s:StTpVw:o:O:q:xyz")) != -1)
   {          
     switch (c)
       {
@@ -153,6 +157,8 @@
       case 'J':
         s.doJSFile = 1;
         break;
+      case 'L':
+        s.LEGACY = 1;
       case 'm':
 	s.mapOnly = 1;
 	s.storeReads = 0;
@@ -289,13 +295,13 @@
     if(s.doCsvFile && !s.outFilePrefix)
   {
    print_selective("\n[Warning:] csv output is set without specifying an output path (via -o).\n ");   
-   print_selective("           A generict temporary file will be written.\n");
+   print_selective("           A generict temporary file will be written.\n\n");
   }
   
   if(s.doJSFile && !s.outFilePrefix)
   {
    print_selective("\n[Warning:] JS output is set without specifying an output path (via -o).\n ");   
-   print_selective("           A generict temporary file will be written.\n");
+   print_selective("           A generict temporary file will be written.\n\n");
   }
   
       if(s.writeConsensus && !s.outFilePrefix)

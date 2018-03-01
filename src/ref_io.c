@@ -895,7 +895,7 @@ void printCSV(FILE *file, resultsVector rv)
   
 }
 
-void printCSV_quality_aware_bases(FILE *file, resultsVector rv)
+void printCSV_quality_aware_bases_LEGACY(FILE *file, resultsVector rv)
 {
     unsigned int i;
     result r;
@@ -914,6 +914,45 @@ void printCSV_quality_aware_bases(FILE *file, resultsVector rv)
   
 }
 
+void printCSV_quality_aware_bases(FILE *file, resultsVector rv)
+{
+    unsigned int i;
+    result r;
+
+     fprintf(file,  "Position, As, Cs, Gs, Ts, Ns, Coverage, "
+                    "As_quality_corrected, Cs_quality_corrected, Gs_quality_corrected, Ts_quality_corrected, Ns_quality_corrected, "
+                    "Consensus_base, Consensus_base_count, Consensus_base_frequency, Consensus_base_frequency_quality_corrected, "
+                    "Variant_base, Variant_base_count, Variant_base_frequency, Variant_base_frequency_quality_corrected, "
+                    "Mean_probability_of_sequencing_error, Expected_number_of_sequencing_errors\n");
+     
+	for(i = 0; i < rv.assignedLength; i++)
+	{
+	  r = rv.results[i];
+	  
+	  
+	fprintf(file,  "%u, %u, %u, %u, %u, %u, %u, "
+                       "%f, %f, %f, %f, %f, "
+                       "%c, %u, %f, %f, "
+                       "%c, %u, %f, %f, "
+                       "%f, %f\n", 
+	       i, r.A, r.C, r.G, r.T, r.N, r.coverage, 
+               r.qA, r.qC, r.qG, r.qT, r.qN, 
+               r.majorBase, r.majorBaseCount, r.frequencyMajorBase, r.frequencyMajorBase_quality_corrected, 
+               r.secondBase_char, r.secondBaseCount, r.frequencySecondBase, r.frequencySecondBase_quality_corrected, 
+               r.meanError, r.coverage * r.meanError);
+	}
+  
+  
+}
+
+void printCSV_wrapper(setting s, FILE *file, resultsVector rv){
+    
+    if(s.LEGACY){
+    printCSV_quality_aware_bases_LEGACY(file, rv);    
+    }else{
+    printCSV_quality_aware_bases(file, rv);
+    }
+}
 
 //print as html table element
 void pd_c(FILE *file, char* color, const char *format, ...)
@@ -1033,6 +1072,437 @@ void printHtml(FILE *file, setting s, resultsVector rv)
 	}
   
   fprintf(file,"</table></body></html>\n");
+}
+
+
+
+void print_interactive_html_file_js_DISCONTINUED(FILE *file, setting s, resultsVector rv)
+{
+     unsigned int i, length;
+     
+     result r;
+     
+     length = rv.assignedLength;
+     
+     if(s.outFilePrefix)
+        {
+        char* temp = remove_path_by_strdup(s.outFilePrefix);
+        fprintf(file, "var analysis_name = \"%s\";\n", temp);
+        free(temp);
+        }
+     
+      fprintf(file, "var max_line = %u;\n", length);
+//      -------------------------------
+     fprintf(file, "var As = [");  
+     for(i = 0; i < length; i++)
+	{            
+        r = rv.results[i];
+          
+        fprintf(file, "%u", r.A);
+     
+            if(i+1 < length)
+            {
+            fprintf(file, ", ");   
+                if( ((i+1) % 100) == 0)
+                {
+                fprintf(file, "\n");   
+                }
+            }
+        }
+     fprintf(file, "];\n");  
+
+//      -------------------------------
+     fprintf(file, "var Cs = [");  
+     for(i = 0; i < length; i++)
+	{            
+        r = rv.results[i];
+          
+        fprintf(file, "%u", r.C);
+     
+            if(i+1 < length)
+            {
+            fprintf(file, ", ");   
+                if( ((i+1) % 100) == 0)
+                {
+                fprintf(file, "\n");   
+                }
+            }
+        }
+     fprintf(file, "];\n");  
+     
+//      -------------------------------
+     fprintf(file, "var Gs = [");  
+     for(i = 0; i < length; i++)
+	{            
+        r = rv.results[i];
+          
+        fprintf(file, "%u", r.G);
+     
+            if(i+1 < length)
+            {
+            fprintf(file, ", ");   
+                if( ((i+1) % 100) == 0)
+                {
+                fprintf(file, "\n");   
+                }
+            }
+        }
+     fprintf(file, "];\n");       
+     
+     fprintf(file, "var Ns = [");  
+     for(i = 0; i < length; i++)
+	{            
+        r = rv.results[i];
+          
+        fprintf(file, "%u", r.N);
+     
+            if(i+1 < length)
+            {
+            fprintf(file, ", ");   
+                if( ((i+1) % 100) == 0)
+                {
+                fprintf(file, "\n");   
+                }
+            }
+        }
+     fprintf(file, "];\n");   
+//     --------------------------------------
+          fprintf(file, "var Ts = [");  
+     for(i = 0; i < length; i++)
+	{            
+        r = rv.results[i];
+          
+        fprintf(file, "%u", r.T);
+     
+            if(i+1 < length)
+            {
+            fprintf(file, ", ");   
+                if( ((i+1) % 100) == 0)
+                {
+                fprintf(file, "\n");   
+                }
+            }
+        }
+     fprintf(file, "];\n");      
+     
+     
+//     --------------------------------------
+          fprintf(file, "var Coverage = [");  
+     for(i = 0; i < length; i++)
+	{            
+        r = rv.results[i];
+          
+        fprintf(file, "%u", r.coverage);
+     
+            if(i+1 < length)
+            {
+            fprintf(file, ", ");   
+                if( ((i+1) % 100) == 0)
+                {
+                fprintf(file, "\n");   
+                }
+            }
+        }
+     fprintf(file, "];\n");      
+     
+     
+     
+     //     --------------------------------------
+          fprintf(file, "var Expected_number_of_sequencing_errors = [");  
+     for(i = 0; i < length; i++)
+	{            
+        r = rv.results[i];
+          
+        if( isnan(r.coverage * r.meanError) )
+        {
+        fprintf(file, "undefined");    
+        }else{
+        fprintf(file, "%f", r.coverage * r.meanError);
+        }
+        
+            if(i+1 < length)
+            {
+            fprintf(file, ", ");   
+                if( ((i+1) % 100) == 0)
+                {
+                fprintf(file, "\n");   
+                }
+            }
+        }
+     fprintf(file, "];\n");   
+     
+
+          //     --------------------------------------
+          fprintf(file, "var Consensus_base_frequency = [");  
+     for(i = 0; i < length; i++)
+	{            
+        r = rv.results[i];
+          
+        if( isnan(r.frequencyMajorBase) )
+        {
+        fprintf(file, "undefined");    
+        }else{
+        fprintf(file, "%f", r.frequencyMajorBase);
+        }
+        
+            if(i+1 < length)
+            {
+            fprintf(file, ", ");   
+                if( ((i+1) % 100) == 0)
+                {
+                fprintf(file, "\n");   
+                }
+            }
+        }
+     fprintf(file, "];\n");   
+     
+     
+     
+               //     --------------------------------------
+          fprintf(file, "var Consensus_base = [");  
+     for(i = 0; i < length; i++)
+	{            
+        r = rv.results[i];
+          
+
+        fprintf(file, "\"%c\"", r.majorBase);
+        
+        
+            if(i+1 < length)
+            {
+            fprintf(file, ", ");   
+                if( ((i+1) % 100) == 0)
+                {
+                fprintf(file, "\n");   
+                }
+            }
+        }
+     fprintf(file, "];\n");   
+     
+     
+          
+     
+               //     --------------------------------------
+          fprintf(file, "var Variant_base = [");  
+     for(i = 0; i < length; i++)
+	{            
+        r = rv.results[i];
+          
+
+        fprintf(file, "\"%c\"", r.secondBase_char);
+        
+        
+            if(i+1 < length)
+            {
+            fprintf(file, ", ");   
+                if( ((i+1) % 100) == 0)
+                {
+                fprintf(file, "\n");   
+                }
+            }
+        }
+     fprintf(file, "];\n");   
+     
+     
+          //     --------------------------------------
+          fprintf(file, "var Mean_probability_of_sequencing_error = [");  
+     for(i = 0; i < length; i++)
+	{            
+        r = rv.results[i];
+          
+        if( isnan(r.frequencyMajorBase) )
+        {
+        fprintf(file, "undefined");    
+        }else{
+        fprintf(file, "%f", r.meanError);
+        }
+        
+            if(i+1 < length)
+            {
+            fprintf(file, ", ");   
+                if( ((i+1) % 100) == 0)
+                {
+                fprintf(file, "\n");   
+                }
+            }
+        }
+     fprintf(file, "];\n");   
+     
+     
+     
+               //     --------------------------------------
+          fprintf(file, "var Variant_base_frequency = [");  
+     for(i = 0; i < length; i++)
+	{            
+        r = rv.results[i];
+          
+        if( isnan(r.frequencyMajorBase) )
+        {
+        fprintf(file, "undefined");    
+        }else{
+        fprintf(file, "%f", r.frequencySecondBase);
+        }
+        
+            if(i+1 < length)
+            {
+            fprintf(file, ", ");   
+                if( ((i+1) % 100) == 0)
+                {
+                fprintf(file, "\n");   
+                }
+            }
+        }
+     fprintf(file, "];\n");   
+     
+     
+     
+ //     --------------------------------------
+          fprintf(file, "var Variant_base_count = [");  
+     for(i = 0; i < length; i++)
+	{            
+        r = rv.results[i];
+          
+        fprintf(file, "%u", r.secondBaseCount);
+     
+            if(i+1 < length)
+            {
+            fprintf(file, ", ");   
+                if( ((i+1) % 100) == 0)
+                {
+                fprintf(file, "\n");   
+                }
+            }
+        }
+     fprintf(file, "];\n");   
+              
+//     --------------------------------------
+          fprintf(file, "var min = [");  
+     for(i = 0; i < length; i++)
+	{            
+        r = rv.results[i];
+          
+        fprintf(file, "%u", r.minPhError);
+     
+            if(i+1 < length)
+            {
+            fprintf(file, ", ");   
+                if( ((i+1) % 100) == 0)
+                {
+                fprintf(file, "\n");   
+                }
+            }
+        }
+     fprintf(file, "];\n");   
+     
+          
+//     --------------------------------------
+          fprintf(file, "var Q1 = [");  
+     for(i = 0; i < length; i++)
+	{            
+        r = rv.results[i];
+          
+        fprintf(file, "%u", r.lowerPhQuartile);
+     
+            if(i+1 < length)
+            {
+            fprintf(file, ", ");   
+                if( ((i+1) % 100) == 0)
+                {
+                fprintf(file, "\n");   
+                }
+            }
+        }
+     fprintf(file, "];\n");   
+     
+          
+//     --------------------------------------
+          fprintf(file, "var Median = [");  
+     for(i = 0; i < length; i++)
+	{            
+        r = rv.results[i];
+          
+        fprintf(file, "%u", r.medianPhError);
+     
+            if(i+1 < length)
+            {
+            fprintf(file, ", ");   
+                if( ((i+1) % 100) == 0)
+                {
+                fprintf(file, "\n");   
+                }
+            }
+        }
+     fprintf(file, "];\n");   
+     
+     
+     //     --------------------------------------
+          fprintf(file, "var Q3 = [");  
+     for(i = 0; i < length; i++)
+	{            
+        r = rv.results[i];
+          
+        fprintf(file, "%u", r.upperPhQuartile);
+     
+            if(i+1 < length)
+            {
+            fprintf(file, ", ");   
+                if( ((i+1) % 100) == 0)
+                {
+                fprintf(file, "\n");   
+                }
+            }
+        }
+     fprintf(file, "];\n");   
+     
+     //     --------------------------------------
+          fprintf(file, "var max = [");  
+     for(i = 0; i < length; i++)
+	{            
+        r = rv.results[i];
+          
+        fprintf(file, "%u", r.maxPhError);
+     
+            if(i+1 < length)
+            {
+            fprintf(file, ", ");   
+                if( ((i+1) % 100) == 0)
+                {
+                fprintf(file, "\n");   
+                }
+            }
+        }
+     fprintf(file, "];\n");   
+     
+     //     --------------------------------------
+          fprintf(file, "var Mean = [");  
+     for(i = 0; i < length; i++)
+	{            
+        r = rv.results[i];
+          
+        fprintf(file, "%u", r.meanPhError);
+     
+            if(i+1 < length)
+            {
+            fprintf(file, ", ");   
+                if( ((i+1) % 100) == 0)
+                {
+                fprintf(file, "\n");   
+                }
+            }
+        }
+     fprintf(file, "];\n");   
+     
+//    ??  var majorbases = [
+
+     
+//    ??  var position = [
+//      i
+     
+     
+     
+     
+     
+    	fflush(file);
 }
 
 
@@ -1465,7 +1935,6 @@ void print_interactive_html_file_js(FILE *file, setting s, resultsVector rv)
      
     	fflush(file);
 }
-
 
 
 

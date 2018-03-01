@@ -92,6 +92,9 @@ unsigned int primes;
 
 unsigned int windows;
 unsigned int minFracs;
+
+// Variable denotes usage of old and depreciated output layouts
+unsigned int LEGACY;
 }setting;
 
 

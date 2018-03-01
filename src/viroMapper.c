@@ -161,7 +161,8 @@ sprintf(csvFileName, "_temp.csv");
 FILE * csvFile = fopen(csvFileName,"w");
 
 // printCSV(csvFile, rv);
-printCSV_quality_aware_bases(csvFile, rv);
+printCSV_wrapper(arg, csvFile, rv);
+// printCSV_quality_aware_bases(csvFile, rv);
 
 
 fclose(csvFile);

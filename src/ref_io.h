@@ -25,6 +25,8 @@ void printCSV(FILE* file, resultsVector rv);
 
 void printCSV_quality_aware_bases(FILE *file, resultsVector rv);
 
+void printCSV_wrapper(setting s, FILE *file, resultsVector rv);
+
 void printHtml(FILE *file, setting s, resultsVector rv);
 
 void print_interactive_html_file_js(FILE *file, setting s, resultsVector rv);
