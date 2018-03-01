@@ -921,8 +921,8 @@ void printCSV_quality_aware_bases(FILE *file, resultsVector rv)
 
      fprintf(file,  "Position, As, Cs, Gs, Ts, Ns, Coverage, "
                     "As_quality_corrected, Cs_quality_corrected, Gs_quality_corrected, Ts_quality_corrected, Ns_quality_corrected, "
-                    "Consensus_base, Consensus_base_count, Consensus_base_frequency, Consensus_base_frequency_quality_corrected, "
-                    "Variant_base, Variant_base_count, Variant_base_frequency, Variant_base_frequency_quality_corrected, "
+                    "Major_variant, Major_variant_count, Major_variant_frequency, Major_variant_frequency_quality_corrected, "
+                    "Second_variant, Second_variant_count, Second_variant_frequency, Second_variant_frequency_quality_corrected, "
                     "Mean_probability_of_sequencing_error, Expected_number_of_sequencing_errors\n");
      
 	for(i = 0; i < rv.assignedLength; i++)
