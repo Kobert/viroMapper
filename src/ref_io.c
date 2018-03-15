@@ -584,6 +584,10 @@ void postProcessResults(setting arg, resultsVector *rv)
   result *r;
   unsigned int *e;
   
+  double non_N_coverage; 
+  
+  double overflow;
+  double sum_overflow_adjust;
   double sumPerSiteCoverage       = 0;
   double sumQFloorPerSiteCoverage = 0;
 
@@ -592,9 +596,10 @@ void postProcessResults(setting arg, resultsVector *rv)
 	  r = &(rv->results[i]);
 	  
 	  assert( (r->A + r->C + r->G + r->T + r->N) == r->coverage);
-  //Find major base and second basefrequency
-	  
-	  
+  
+         non_N_coverage =  r->A + r->C + r->G + r->T;
+          
+          //Find major base and second basefrequency
 	  //A
 	  max = r->A;
 	  majorBase = 'A';
@@ -868,7 +873,49 @@ void postProcessResults(setting arg, resultsVector *rv)
 	 r->medianError = fmedian;
 	 r->minError = Q2P(min);
 	 r->maxError = Q2P(max);
-	}
+	
+            
+         
+         //           ML adjusted values
+          r->ML_A = (double)(r->A - r->meanError*non_N_coverage/3.0)/(1-r->meanError*4.0/3.0);
+          r->ML_C = (double)(r->C - r->meanError*non_N_coverage/3.0)/(1-r->meanError*4.0/3.0);
+          r->ML_G = (double)(r->G - r->meanError*non_N_coverage/3.0)/(1-r->meanError*4.0/3.0);
+          r->ML_T = (double)(r->T - r->meanError*non_N_coverage/3.0)/(1-r->meanError*4.0/3.0);
+          
+          assert( abs((r->ML_A + r->ML_C + r->ML_G + r->ML_T) - non_N_coverage) < 0.00001);
+           
+          overflow = 0.0;
+          
+          if(r->ML_A < 0){
+              overflow += r->ML_A;
+              r->ML_A = 0.0;
+          }
+          if(r->ML_C < 0){
+              overflow += r->ML_C;
+              r->ML_C = 0.0;
+          }
+          if(r->ML_G < 0){
+              overflow += r->ML_G;
+              r->ML_G = 0.0;
+          }
+          if(r->ML_T < 0){
+              overflow += r->ML_T;
+              r->ML_T = 0.0;
+          }
+          
+          if(overflow < 0.0){
+          sum_overflow_adjust = r->ML_A + r->ML_C + r->ML_G + r->ML_T;
+          r->ML_A += overflow*r->ML_A/sum_overflow_adjust;
+          r->ML_C += overflow*r->ML_C/sum_overflow_adjust;
+          r->ML_G += overflow*r->ML_G/sum_overflow_adjust;
+          r->ML_T += overflow*r->ML_T/sum_overflow_adjust;
+          }
+          
+          assert( abs((r->ML_A + r->ML_C + r->ML_G + r->ML_T) - non_N_coverage) < 0.00001);
+           
+          
+          
+        }//End of for loop
   
     rv->averageCoverage       = sumPerSiteCoverage/(double)rv->assignedLength;
     rv->averageQFloorCoverage = sumQFloorPerSiteCoverage/(double)rv->assignedLength;
@@ -921,6 +968,7 @@ void printCSV_quality_aware_bases(FILE *file, resultsVector rv)
 
      fprintf(file,  "Position, As, Cs, Gs, Ts, Ns, Coverage, "
                     "As_quality_corrected, Cs_quality_corrected, Gs_quality_corrected, Ts_quality_corrected, Ns_quality_corrected, "
+                    "As_ML_corrected, Cs_ML_corrected, Gs_ML_corrected, Ts_ML_corrected, "
                     "Major_variant, Major_variant_count, Major_variant_frequency, Major_variant_frequency_quality_corrected, "
                     "Second_variant, Second_variant_count, Second_variant_frequency, Second_variant_frequency_quality_corrected, "
                     "Mean_probability_of_sequencing_error, Expected_number_of_sequencing_errors\n");
@@ -932,11 +980,13 @@ void printCSV_quality_aware_bases(FILE *file, resultsVector rv)
 	  
 	fprintf(file,  "%u, %u, %u, %u, %u, %u, %u, "
                        "%f, %f, %f, %f, %f, "
+                       "%f, %f, %f, %f, "
                        "%c, %u, %f, %f, "
                        "%c, %u, %f, %f, "
                        "%f, %f\n", 
 	       i, r.A, r.C, r.G, r.T, r.N, r.coverage, 
-               r.qA, r.qC, r.qG, r.qT, r.qN, 
+               r.qA, r.qC, r.qG, r.qT, r.qN,
+               r.ML_A, r.ML_C, r.ML_G, r.ML_T, 
                r.majorBase, r.majorBaseCount, r.frequencyMajorBase, r.frequencyMajorBase_quality_corrected, 
                r.secondBase_char, r.secondBaseCount, r.frequencySecondBase, r.frequencySecondBase_quality_corrected, 
                r.meanError, r.coverage * r.meanError);

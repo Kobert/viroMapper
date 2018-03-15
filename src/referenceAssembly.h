@@ -240,6 +240,12 @@ typedef struct
   double qT;
   double qN;
   
+  double ML_A;
+  double ML_C;
+  double ML_G;
+  double ML_T;
+  double ML_N;
+  
   unsigned int coverage;
   unsigned int qFloorCoverage;
   
