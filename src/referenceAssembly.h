@@ -263,6 +263,8 @@ typedef struct
   double frequencyMajorBase_quality_corrected;
   double frequencySecondBase_quality_corrected;
   
+  double frequencyMajorBase_ML_corrected;
+  double frequencySecondBase_ML_corrected;
   
   unsigned int meanPhError;
   unsigned int medianPhError;

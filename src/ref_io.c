@@ -690,6 +690,8 @@ void postProcessResults(setting arg, resultsVector *rv)
           r->frequencySecondBase_quality_corrected = 0.0;          
 //          }
          
+          
+          
         if(majorBase == 'A'){
           r->frequencyMajorBase_quality_corrected = r->qA/(double)(r->qA + r->qC + r->qG + r->qT);
         }
@@ -701,6 +703,9 @@ void postProcessResults(setting arg, resultsVector *rv)
         }
         if(majorBase == 'T'){
           r->frequencyMajorBase_quality_corrected = r->qT/(double)(r->qA + r->qC + r->qG + r->qT);
+        }
+        if(majorBase == 'N'){
+          r->frequencyMajorBase_quality_corrected = r->frequencyMajorBase;
         }
         
         
@@ -715,6 +720,9 @@ void postProcessResults(setting arg, resultsVector *rv)
         }
         if(secondBase == 'T'){
           r->frequencySecondBase_quality_corrected = r->qT/(double)(r->qA + r->qC + r->qG + r->qT);
+        }
+        if(secondBase == 'N'){
+          r->frequencySecondBase_quality_corrected = r->frequencySecondBase;
         }
          
 // Find Quality scores
@@ -913,8 +921,39 @@ void postProcessResults(setting arg, resultsVector *rv)
           
           assert( abs((r->ML_A + r->ML_C + r->ML_G + r->ML_T) - non_N_coverage) < 0.00001);
            
-          
-          
+            if(majorBase == 'A'){
+              r->frequencyMajorBase_ML_corrected = r->ML_A/non_N_coverage;
+            }
+            if(majorBase == 'C'){
+              r->frequencyMajorBase_ML_corrected = r->ML_C/non_N_coverage;
+            }
+            if(majorBase == 'G'){
+              r->frequencyMajorBase_ML_corrected = r->ML_G/non_N_coverage;
+            }
+            if(majorBase == 'T'){
+              r->frequencyMajorBase_ML_corrected = r->ML_T/non_N_coverage;
+            }
+            if(majorBase == 'N'){
+              r->frequencyMajorBase_ML_corrected = r->frequencyMajorBase;
+            }
+            
+            
+            if(secondBase == 'A'){
+              r->frequencySecondBase_ML_corrected = r->ML_A/non_N_coverage;
+            }
+            if(secondBase == 'C'){
+              r->frequencySecondBase_ML_corrected = r->ML_C/non_N_coverage;
+            }
+            if(secondBase == 'G'){
+              r->frequencySecondBase_ML_corrected = r->ML_G/non_N_coverage;
+            }
+            if(secondBase == 'T'){
+              r->frequencySecondBase_ML_corrected = r->ML_T/non_N_coverage;
+            }
+            if(secondBase == 'N'){
+              r->frequencySecondBase_ML_corrected = r->frequencySecondBase;
+            }
+           
         }//End of for loop
   
     rv->averageCoverage       = sumPerSiteCoverage/(double)rv->assignedLength;
@@ -970,7 +1009,9 @@ void printCSV_quality_aware_bases(FILE *file, resultsVector rv)
                     "As_quality_corrected, Cs_quality_corrected, Gs_quality_corrected, Ts_quality_corrected, Ns_quality_corrected, "
                     "As_ML_corrected, Cs_ML_corrected, Gs_ML_corrected, Ts_ML_corrected, "
                     "Major_variant, Major_variant_count, Major_variant_frequency, Major_variant_frequency_quality_corrected, "
+                    "Major_variant_frequency_ML_corrected, "
                     "Second_variant, Second_variant_count, Second_variant_frequency, Second_variant_frequency_quality_corrected, "
+                    "Second_variant_frequency_ML_corrected, "
                     "Mean_probability_of_sequencing_error, Expected_number_of_sequencing_errors\n");
      
 	for(i = 0; i < rv.assignedLength; i++)
@@ -982,13 +1023,17 @@ void printCSV_quality_aware_bases(FILE *file, resultsVector rv)
                        "%f, %f, %f, %f, %f, "
                        "%f, %f, %f, %f, "
                        "%c, %u, %f, %f, "
+                       "%f, "
                        "%c, %u, %f, %f, "
+                       "%f, "
                        "%f, %f\n", 
 	       i, r.A, r.C, r.G, r.T, r.N, r.coverage, 
                r.qA, r.qC, r.qG, r.qT, r.qN,
                r.ML_A, r.ML_C, r.ML_G, r.ML_T, 
                r.majorBase, r.majorBaseCount, r.frequencyMajorBase, r.frequencyMajorBase_quality_corrected, 
+               r.frequencyMajorBase_ML_corrected, 
                r.secondBase_char, r.secondBaseCount, r.frequencySecondBase, r.frequencySecondBase_quality_corrected, 
+               r.frequencySecondBase_ML_corrected, 
                r.meanError, r.coverage * r.meanError);
 	}
   
