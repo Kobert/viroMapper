@@ -2358,19 +2358,19 @@ void printSamLine(int position, int position_offset, char* referenceName, char* 
     }
     //CIGAR TODO clipping
     if(position < 0)
-    printf("**\t");
+    printf("*\t");
     else
     {
     printf("%dM\t", length);
     }
     //RNEXT
-    printf("0\t");
+    printf("*\t");
     
     //PNEXT
-    printf("*\t");
+    printf("0\t");
     
     //TLEN
-    printf("*\t");
+    printf("0\t");
     
     //SEQ
     printf("%.*s\t", length, seq);
